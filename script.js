@@ -205,14 +205,15 @@ function claimBox(row, col){
   me.score++;
 }
 
-/** Aggiorna indicatore di turno (pill con glow del colore giocatore) */
+/** Aggiorna indicatore di turno */
 function updateTurnUI(){
   const me = state.players[state.current];
   const label = me.letter ? `Giocatore ${state.current+1} (${me.letter})`
                           : `Giocatore ${state.current+1}`;
-  els.turnWho.textContent = label;
-  els.turnWho.style.color = me.color;
-  els.turnWho.style.textShadow = `0 0 8px ${me.color}66, 0 0 16px ${me.color}33`;
+  const el = els.turnWho;
+  el.textContent = label;
+  el.style.color = me.color;
+  el.style.textShadow = `0 0 8px ${me.color}66, 0 0 16px ${me.color}33`;
 }
 
 /** Mostra il punteggio (se final=true aggiunge nota di fine) */
@@ -249,10 +250,10 @@ function showScore(final=false){
   }
 
   try { els.scoreModal.showModal(); }
-  catch { els.scoreModal.setAttribute('open',''); } // fallback
+  catch { els.scoreModal.setAttribute('open',''); } // fallback iOS vecchi
 }
 
-/** Torna alla configurazione (senza ricaricare la pagina) */
+/** Torna alla configurazione */
 function resetToConfig(){
   els.board.innerHTML = '';
   state.N = 0;
