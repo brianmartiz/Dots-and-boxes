@@ -1,100 +1,48 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Dots & Boxes — Neon 70s</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Archivo:wght@400;600&display=swap" rel="stylesheet">
-
-  <!-- CSS (cache buster) -->
-  <link rel="stylesheet" href="./style.css?v=neon2">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Dots & Boxes</title>
+<link rel="stylesheet" href="style.css">
+<!-- Google Font for synthwave vibe -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap">
 </head>
-<body class="theme-dark">
-  <header class="app-header">
-    <h1 class="neon-title">Dots & Boxes</h1>
-    <p class="subtitle">Neon ’70s • due giocatori sullo stesso dispositivo</p>
-    <div class="neon-divider" aria-hidden="true"></div>
-  </header>
+<body>
+  <div id="settings">
+    <h1>Neon Dots & Boxes</h1>
+    <label>Grid size (boxes per side, max 10): 
+      <input type="number" id="gridSize" min="2" max="10" value="5">
+    </label><br>
+    <label>Player 1 Name/Letter: <input type="text" id="p1Name" value="A"></label>
+    <label>Color: <input type="color" id="p1Color" value="#00ffff"></label><br>
+    <label>Player 2 Name/Letter: <input type="text" id="p2Name" value="B"></label>
+    <label>Color: <input type="color" id="p2Color" value="#ff00ff"></label><br>
+    <button id="startBtn">Start Game</button>
+  </div>
 
-  <!-- Pannello configurazione -->
-  <section id="config" class="panel neon-card">
-    <h2 class="panel-title">Impostazioni partita</h2>
-    <div class="row grid-2">
-      <label for="gridSize" class="field">
-        <span class="label">Dimensione (quadrati per lato)</span>
-        <input id="gridSize" type="number" min="1" max="10" value="4" />
-        <small class="help">Da 1×1 fino a 10×10</small>
-      </label>
-      <div class="field fake-field"></div>
-    </div>
+  <div id="controls" class="hidden">
+    <button id="undoBtn">Annulla mossa</button>
+    <button id="toggleScoreBtn">Mostra Punteggio</button>
+  </div>
 
-    <div class="row players">
-      <div class="player-card neon-subcard">
-        <h3><span class="badge p1"></span> Giocatore 1</h3>
-        <label class="field">
-          <span class="label">Lettera (opzionale)</span>
-          <input id="p1Letter" type="text" maxlength="1" placeholder="A" />
-        </label>
-        <label class="field">
-          <span class="label">Colore</span>
-          <input id="p1Color" type="color" value="#00e5ff" />
-        </label>
-      </div>
+  <div id="scoreboard" class="hidden">
+    <div id="score1">A: 0</div>
+    <div id="score2">B: 0</div>
+  </div>
 
-      <div class="player-card neon-subcard">
-        <h3><span class="badge p2"></span> Giocatore 2</h3>
-        <label class="field">
-          <span class="label">Lettera (opzionale)</span>
-          <input id="p2Letter" type="text" maxlength="1" placeholder="B" />
-        </label>
-        <label class="field">
-          <span class="label">Colore</span>
-          <input id="p2Color" type="color" value="#ff3df7" />
-        </label>
-      </div>
-    </div>
+  <div id="gameBoard" class="hidden"></div>
 
-    <div class="row actions">
-      <button id="startBtn" class="btn primary" type="button">Avvia partita</button>
-    </div>
-    <p class="hint">Suggerimento: se lasci la lettera vuota, i tuoi quadrati useranno il tuo colore.</p>
-  </section>
+  <div id="endScreen" class="hidden">
+    <div id="endMessage"></div>
+    <button id="restartBtn">Restart</button>
+  </div>
 
-  <!-- Area di gioco -->
-  <section id="gameArea" class="panel neon-card" hidden>
-    <div class="topbar">
-      <div id="turnIndicator" class="turn-indicator">
-        Turno: <span id="turnWho" class="who"></span>
-      </div>
-      <div class="controls">
-        <button id="scoreBtn" class="btn ghost" type="button">Mostra punteggio</button>
-        <button id="newBtn" class="btn" type="button">Nuova partita</button>
-      </div>
-    </div>
+  <!-- Audio effects (add actual .mp3 files in project directory) -->
+  <audio id="soundClick"><source src="click.mp3" type="audio/mpeg"></audio>
+  <audio id="soundComplete"><source src="complete.mp3" type="audio/mpeg"></audio>
+  <audio id="soundWin"><source src="win.mp3" type="audio/mpeg"></audio>
 
-    <div id="boardWrapper" class="board-wrapper">
-      <div id="board" class="board" aria-label="griglia di gioco" role="grid"></div>
-      <div class="board-glow" aria-hidden="true"></div>
-    </div>
-  </section>
-
-  <!-- Modal punteggio -->
-  <dialog id="scoreModal" class="modal">
-    <h3 class="neon">Punteggio</h3>
-    <div id="scoreContent" class="score-content"></div>
-    <div class="modal-actions">
-      <button id="closeScore" class="btn primary" type="button">Chiudi</button>
-    </div>
-  </dialog>
-
-  <footer class="app-footer">
-    <div class="neon-divider small" aria-hidden="true"></div>
-    <small>Solo HTML/CSS/JS • Nessun backend • Pronto per Netlify</small>
-  </footer>
-
-  <!-- JS (cache buster + defer) -->
-  <script src="./script.js?v=neon2" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
