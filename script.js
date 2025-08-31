@@ -4,9 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameContainer = document.getElementById('game-container');
     const gridSizeInput = document.getElementById('grid-size');
     const p1MarkerInput = document.getElementById('p1-marker');
-    const p1ColorInput = document.getElementById('p1-color');
     const p2MarkerInput = document.getElementById('p2-marker');
-    const p2ColorInput = document.getElementById('p2-color');
     const startGameBtn = document.getElementById('start-game-btn');
     const board = document.getElementById('board');
     const turnIndicator = document.getElementById('turn-indicator');
@@ -24,7 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let horizontalLines;
     let verticalLines;
     let boxes;
-    let gameEnded; // MIGLIORAMENTO: Aggiunta variabile per tracciare la fine del gioco
+    let gameEnded;
+
+    // Colori NEON predefiniti
+    const NEON_COLORS = {
+        p1: '#00f6ff', // Ciano
+        p2: '#ff00e5'  // Magenta
+    };
 
     // --- GESTIONE DEGLI EVENTI ---
     startGameBtn.addEventListener('click', initializeGame);
@@ -33,16 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
         setupDiv.classList.remove('hidden');
     });
     scoreBtn.addEventListener('click', () => {
-        scoreDisplay.textContent = `Giocatore 1: ${scores.p1} - Giocatore 2: ${scores.p2}`;
+        scoreDisplay.innerHTML = `Giocatore 1: <span style="color:${NEON_COLORS.p1}">${scores.p1}</span> - Giocatore 2: <span style="color:${NEON_COLORS.p2}">${scores.p2}</span>`;
         scoreModal.classList.remove('hidden');
     });
-    closeBtn.addEventListener('click', () => {
-        scoreModal.classList.add('hidden');
-    });
+    closeBtn.addEventListener('click', () => scoreModal.classList.add('hidden'));
     window.addEventListener('click', (event) => {
-        if (event.target == scoreModal) {
-            scoreModal.classList.add('hidden');
-        }
+        if (event.target == scoreModal) scoreModal.classList.add('hidden');
     });
 
     // --- FUNZIONI PRINCIPALI DEL GIOCO ---
@@ -54,19 +54,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // MIGLIORAMENTO: Controlla se i giocatori hanno scelto lo stesso colore
-        if (p1ColorInput.value === p2ColorInput.value) {
-            alert("Attenzione: I due giocatori hanno scelto lo stesso colore. Il gioco potrebbe essere confusionario!");
-        }
-
         players = {
-            p1: { marker: p1MarkerInput.value || 'P1', color: p1ColorInput.value },
-            p2: { marker: p2MarkerInput.value || 'P2', color: p2ColorInput.value }
+            p1: { marker: p1MarkerInput.value || 'P1', color: NEON_COLORS.p1 },
+            p2: { marker: p2MarkerInput.value || 'P2', color: NEON_COLORS.p2 }
         };
 
         currentPlayer = 1;
         scores = { p1: 0, p2: 0 };
-        gameEnded = false; // MIGLIORAMENTO: Resetta lo stato di fine gioco
+        gameEnded = false;
         
         horizontalLines = Array(gridSize + 1).fill(null).map(() => Array(gridSize).fill(false));
         verticalLines = Array(gridSize).fill(null).map(() => Array(gridSize + 1).fill(false));
@@ -82,8 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function createBoard() {
         board.innerHTML = '';
         const boardSize = gridSize * 2 + 1;
-        board.style.gridTemplateColumns = `repeat(${boardSize}, auto)`;
-        board.style.gridTemplateRows = `repeat(${boardSize}, auto)`;
+        board.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+        board.style.gridTemplateRows = `repeat(${boardSize}, 30px)`;
 
         for (let row = 0; row < boardSize; row++) {
             for (let col = 0; col < boardSize; col++) {
@@ -111,7 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleLineClick(event) {
-        // MIGLIORAMENTO: Se il gioco è finito, non fare nulla
         if (gameEnded) return;
 
         const line = event.target;
@@ -120,9 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = parseInt(line.dataset.row);
         const col = parseInt(line.dataset.col);
         let boxCompleted = false;
+        const playerColor = (currentPlayer === 1) ? players.p1.color : players.p2.color;
 
         line.classList.add('taken');
-        line.style.backgroundColor = (currentPlayer === 1) ? players.p1.color : players.p2.color;
+        line.style.backgroundColor = playerColor;
+        line.style.boxShadow = `0 0 10px ${playerColor}`;
 
         if (line.classList.contains('horizontal')) {
             horizontalLines[row][col] = true;
@@ -137,8 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!boxCompleted) {
             switchPlayer();
         }
-
-        // Aggiorna l'indicatore solo se il gioco non è ancora finito
+        
         if (!gameEnded) {
             updateTurnIndicator();
         }
@@ -157,7 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const boxElement = document.querySelector(`.box[data-row='${row}'][data-col='${col}']`);
             const player = (currentPlayer === 1) ? players.p1 : players.p2;
-            boxElement.style.backgroundColor = player.color;
+            
+            boxElement.style.backgroundColor = `${player.color}33`; // Colore con trasparenza
+            boxElement.style.color = player.color;
+            boxElement.style.textShadow = `0 0 10px ${player.color}, 0 0 15px ${player.color}`;
             boxElement.textContent = player.marker;
             
             return true;
@@ -170,26 +168,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateTurnIndicator() {
+        const playerColor = (currentPlayer === 1) ? players.p1.color : players.p2.color;
         turnIndicator.textContent = `Turno del Giocatore ${currentPlayer}`;
-        turnIndicator.style.color = (currentPlayer === 1) ? players.p1.color : players.p2.color;
-        turnIndicator.style.fontWeight = 'bold';
+        turnIndicator.style.color = playerColor;
+        turnIndicator.style.textShadow = `0 0 8px ${playerColor}`;
     }
 
     function checkGameOver() {
-        const totalBoxes = gridSize * gridSize;
-        if (scores.p1 + scores.p2 === totalBoxes) {
-            gameEnded = true; // MIGLIORAMENTO: Imposta lo stato di fine gioco
+        if (scores.p1 + scores.p2 === gridSize * gridSize) {
+            gameEnded = true;
             let winnerMessage;
             if (scores.p1 > scores.p2) {
-                winnerMessage = 'Vince il Giocatore 1!';
+                winnerMessage = `Vince il Giocatore 1!`;
+                turnIndicator.style.color = players.p1.color;
+                turnIndicator.style.textShadow = `0 0 8px ${players.p1.color}`;
             } else if (scores.p2 > scores.p1) {
-                winnerMessage = 'Vince il Giocatore 2!';
+                winnerMessage = `Vince il Giocatore 2!`;
+                turnIndicator.style.color = players.p2.color;
+                turnIndicator.style.textShadow = `0 0 8px ${players.p2.color}`;
             } else {
                 winnerMessage = 'Pareggio!';
+                turnIndicator.style.color = '#e0e0e0';
+                turnIndicator.style.textShadow = `0 0 8px #e0e0e0`;
             }
-            // MIGLIORAMENTO: Mostra il risultato nell'indicatore di turno invece di un alert
             turnIndicator.textContent = `Partita finita! ${winnerMessage}`;
-            turnIndicator.style.color = '#2c3e50'; // Un colore neutro per il messaggio finale
         }
     }
 });
