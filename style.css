@@ -1,170 +1,156 @@
-/* Stili generali del corpo della pagina */
+/* --- IMPOSTAZIONI GENERALI E TEMA NEON --- */
+:root {
+    --color-background: #0d0221;
+    --color-p1: #00f6ff; /* Ciano */
+    --color-p2: #ff00e5; /* Magenta */
+    --color-neutral-glow: #f0f0f0;
+    --color-text: #e0e0e0;
+    --border-color: rgba(255, 255, 255, 0.2);
+    --font-title: 'Press Start 2P', cursive;
+    --font-body: 'Roboto Mono', monospace;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: var(--font-body);
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f0f2f5;
+    background-color: var(--color-background);
     margin: 0;
-    color: #333;
+    color: var(--color-text);
 }
 
-/* Contenitori principali */
+/* --- CARD PRINCIPALI (SETUP E GIOCO) --- */
 #setup, #game-container {
-    background-color: white;
-    padding: 20px 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 30px 40px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 0 15px rgba(0, 246, 255, 0.1), 0 0 20px rgba(255, 0, 229, 0.1);
     text-align: center;
     width: 90%;
-    max-width: 400px;
+    max-width: 480px;
 }
 
-h1, h2 {
-    color: #2c3e50;
+/* --- TESTI E TITOLI NEON --- */
+.neon-title {
+    font-family: var(--font-title);
+    font-size: 2em;
+    color: #fff;
+    text-shadow:
+        0 0 5px var(--color-neutral-glow),
+        0 0 10px var(--color-p1),
+        0 0 20px var(--color-p2);
 }
 
-/* Stili per la configurazione */
-.config-item, .player-config {
+h2 {
+    font-family: var(--font-body);
+    font-weight: 700;
     margin-bottom: 20px;
 }
+.player-config:first-of-type h2 { color: var(--color-p1); }
+.player-config:last-of-type h2 { color: var(--color-p2); }
 
+/* --- ELEMENTI DEL FORM --- */
 label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 8px;
+    font-weight: 400;
 }
-
-input[type="number"], input[type="text"], input[type="color"] {
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    margin-left: 5px;
-}
-
-input[type="text"] {
-    width: 30px;
+input[type="number"], input[type="text"] {
+    background-color: #1a1a1a;
+    color: var(--color-text);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px;
     text-align: center;
+    font-family: var(--font-body);
+    transition: all 0.3s;
+}
+input:focus {
+    border-color: var(--color-p1);
+    box-shadow: 0 0 10px var(--color-p1);
+    outline: none;
 }
 
-/* Stili per i pulsanti */
+/* --- PULSANTI NEON --- */
 button {
-    background-color: #2ecc71;
-    color: white;
-    border: none;
+    font-family: var(--font-title);
+    font-size: 14px;
+    color: var(--color-text);
+    background-color: transparent;
+    border: 2px solid var(--color-text);
+    border-radius: 8px;
     padding: 12px 20px;
-    border-radius: 5px;
     cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
-    margin: 5px;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+    margin: 10px 5px;
 }
-
 button:hover {
-    background-color: #27ae60;
-}
-
-#new-game-btn {
-    background-color: #f39c12;
+    color: white;
+    background-color: var(--color-p1);
+    border-color: var(--color-p1);
+    box-shadow: 0 0 20px var(--color-p1);
 }
 #new-game-btn:hover {
-    background-color: #e67e22;
+    background-color: var(--color-p2);
+    border-color: var(--color-p2);
+    box-shadow: 0 0 20px var(--color-p2);
 }
 
-/* Stili per la griglia di gioco */
+/* --- GRIGLIA DI GIOCO NEON --- */
 #board {
     display: grid;
-    margin: 20px auto;
+    margin: 25px auto;
+    gap: 4px;
 }
-
 .dot {
-    width: 15px;
-    height: 15px;
-    background-color: #2c3e50;
+    width: 10px;
+    height: 10px;
+    background-color: var(--color-neutral-glow);
     border-radius: 50%;
     place-self: center;
+    box-shadow: 0 0 8px var(--color-neutral-glow);
 }
-
 .line {
-    background-color: #ecf0f1;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
 }
-
 .line:hover {
-    background-color: #bdc3c7;
+    background-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
-
-.line.horizontal {
-    width: 100%;
-    height: 10px;
-    place-self: center;
-}
-
-.line.vertical {
-    width: 10px;
-    height: 100%;
-    place-self: center;
-}
-
-/* Stili per le linee prese e le scatole completate */
-.line.taken {
-    /* Il colore di sfondo viene impostato da JS */
-    cursor: not-allowed; /* MIGLIORAMENTO: Mostra che la linea non è più cliccabile */
-}
-
+.line.horizontal { width: 100%; height: 6px; place-self: center; }
+.line.vertical { width: 6px; height: 100%; place-self: center; }
+.line.taken { cursor: not-allowed; }
 .box {
     place-self: stretch;
     display: flex;
     justify-content: center;
     align-items: center;
+    font-family: var(--font-title);
     font-size: 2em;
-    font-weight: bold;
-    color: white;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    border-radius: 8px;
+    transition: all 0.3s ease;
 }
 
-/* Stili per la finestra del punteggio (modal) */
-.modal {
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* --- INDICATORE DI TURNO --- */
+#turn-indicator {
+    font-size: 1.2em;
+    font-weight: 700;
+    transition: all 0.3s ease;
 }
 
+/* --- FINESTRA DEL PUNTEGGIO (MODAL) --- */
+.modal { background-color: rgba(0, 0, 0, 0.7); }
 .modal-content {
-    background-color: #fefefe;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 300px;
-    border-radius: 10px;
-    text-align: center;
-    position: relative;
+    background-color: var(--color-background);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
 }
-
-.close-btn {
-    color: #aaa;
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close-btn:hover {
-    color: black;
-}
-
-/* Utilità per nascondere elementi */
-.hidden {
-    display: none;
-}
+.close-btn:hover { color: white; }
+.hidden { display: none; }
