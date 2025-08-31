@@ -1,53 +1,30 @@
 'use strict';
 
-/** ======= Stato ======= */
+/** ===== Stato ===== */
 const state = {
   N: 0,
-  current: 0, // 0: P1, 1: P2
+  current: 0,
   players: [
-    { letter: '', color: '#00e5ff', score: 0 },
-    { letter: '', color: '#ff3df7', score: 0 }
+    { name: 'Giocatore 1', letter: '', color: '#12C2E9', score: 0 },
+    { name: 'Giocatore 2', letter: '', color: '#F72585', score: 0 }
   ],
-  history: [] // stack delle mosse per undo
+  history: []
 };
 
 const els = {};
-const clamp = (min, v, max) => Math.max(min, Math.min(v, max));
-const uc1 = (s) => (s || '').trim().slice(0,1).toUpperCase();
+const clamp = (min,v,max)=>Math.max(min,Math.min(v,max));
+const uc1 = s => (s||'').trim().slice(0,1).toUpperCase();
 
-/** ======= SFX via WebAudio (niente file) ======= */
-let audioCtx = null, muted = false;
-function ensureAudio(){
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-function tone(freq=880, dur=0.06, type='sine', gain=0.08){
-  if (muted) return;
-  ensureAudio();
-  const t0 = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  osc.type = type; osc.frequency.value = freq;
-  g.gain.setValueAtTime(0, t0);
-  g.gain.linearRampToValueAtTime(gain, t0 + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  osc.connect(g).connect(audioCtx.destination);
-  osc.start(t0); osc.stop(t0 + dur + 0.02);
-}
-function sfxClick(){ tone(1200, .05, 'triangle', .06); }
-function sfxBox(){ tone(520, .12, 'sawtooth', .05); tone(780, .12, 'sine', .05); }
-function sfxWin(){
-  const seq = [660, 880, 990, 1320];
-  seq.forEach((f,i)=> setTimeout(()=> tone(f, .08, 'triangle', .06), i*90));
-}
-
-/** ======= Init ======= */
+/** ===== Init ===== */
 document.addEventListener('DOMContentLoaded', () => {
   Object.assign(els, {
     config: document.getElementById('config'),
     gridSize: document.getElementById('gridSize'),
+    p1Name: document.getElementById('p1Name'),
+    p2Name: document.getElementById('p2Name'),
     p1Letter: document.getElementById('p1Letter'),
-    p1Color: document.getElementById('p1Color'),
     p2Letter: document.getElementById('p2Letter'),
+    p1Color: document.getElementById('p1Color'),
     p2Color: document.getElementById('p2Color'),
     startBtn: document.getElementById('startBtn'),
 
@@ -57,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     scoreBtn: document.getElementById('scoreBtn'),
     newBtn: document.getElementById('newBtn'),
     undoBtn: document.getElementById('undoBtn'),
-    muteBtn: document.getElementById('muteBtn'),
 
     scoreModal: document.getElementById('scoreModal'),
     scoreContent: document.getElementById('scoreContent'),
@@ -69,25 +45,25 @@ document.addEventListener('DOMContentLoaded', () => {
   els.closeScore.addEventListener('click', () => els.scoreModal.close());
   els.newBtn.addEventListener('click', resetToConfig);
   els.undoBtn.addEventListener('click', undoMove);
-  els.muteBtn.addEventListener('click', toggleMute);
 });
 
-function toggleMute(){
-  muted = !muted;
-  els.muteBtn.setAttribute('aria-pressed', String(!muted ? false : true));
-  els.muteBtn.textContent = muted ? '🔇 Muto' : '🔊 Audio';
-}
-
-/** ======= Avvio ======= */
+/** ===== Avvio ===== */
 function startGame(){
-  const N = clamp(1, parseInt(els.gridSize.value, 10) || 4, 10);
+  const N = clamp(1, parseInt(els.gridSize.value, 10) || 5, 10);
   state.N = N;
+
+  state.players[0].name   = (els.p1Name.value || 'Giocatore 1').trim();
+  state.players[1].name   = (els.p2Name.value || 'Giocatore 2').trim();
   state.players[0].letter = uc1(els.p1Letter.value);
-  state.players[0].color  = els.p1Color.value || '#00e5ff';
   state.players[1].letter = uc1(els.p2Letter.value);
-  state.players[1].color  = els.p2Color.value || '#ff3df7';
+  state.players[0].color  = els.p1Color.value || '#12C2E9';
+  state.players[1].color  = els.p2Color.value || '#F72585';
   state.players[0].score = 0; state.players[1].score = 0;
   state.current = 0; state.history = [];
+
+  // palette CSS per linee disegnate (se servono variabili)
+  document.documentElement.style.setProperty('--p1', state.players[0].color);
+  document.documentElement.style.setProperty('--p2', state.players[1].color);
 
   buildBoard(N);
 
@@ -96,7 +72,7 @@ function startGame(){
   updateTurnUI();
 }
 
-/** ======= Board ======= */
+/** ===== Board ===== */
 function buildBoard(N){
   const R = 2*N + 1;
   els.board.innerHTML = '';
@@ -107,20 +83,23 @@ function buildBoard(N){
     for (let c = 0; c < R; c++){
       const cell = document.createElement('div');
 
-      if (r % 2 === 0 && c % 2 === 0){
+      if (r%2===0 && c%2===0){
         cell.className = 'dot';
-      } else if (r % 2 === 0 && c % 2 === 1){
-        const row = r/2, col = (c-1)/2;
+
+      } else if (r%2===0 && c%2===1){
+        const row=r/2, col=(c-1)/2;
         cell.className = 'h-line';
         cell.dataset.row = row; cell.dataset.col = col;
         cell.addEventListener('click', onLineClick, {passive:true});
-      } else if (r % 2 === 1 && c % 2 === 0){
-        const row = (r-1)/2, col = c/2;
+
+      } else if (r%2===1 && c%2===0){
+        const row=(r-1)/2, col=c/2;
         cell.className = 'v-line';
         cell.dataset.row = row; cell.dataset.col = col;
         cell.addEventListener('click', onLineClick, {passive:true});
+
       } else {
-        const row = (r-1)/2, col = (c-1)/2;
+        const row=(r-1)/2, col=(c-1)/2;
         cell.className = 'box';
         cell.dataset.row = row; cell.dataset.col = col;
       }
@@ -130,62 +109,51 @@ function buildBoard(N){
   }
 }
 
-/** ======= Gioco ======= */
+/** ===== Gioco ===== */
 function onLineClick(ev){
   const line = ev.currentTarget;
   if (line.classList.contains('drawn')) return;
 
-  // Registra mossa (pre)
-  const prevPlayer = state.current;
+  const me = state.players[state.current];
 
-  // Colora e “accende” la linea
-  const drawColor = state.players[state.current].color;
-  line.style.setProperty('--draw', drawColor);
+  // colora linea con colore pieno del giocatore
+  line.style.setProperty('--draw', me.color);
   line.classList.add('drawn');
-  sfxClick();
 
   const type = line.classList.contains('h-line') ? 'h' : 'v';
   const r = +line.dataset.row, c = +line.dataset.col;
 
-  // Controlla box adiacenti
-  const closedBoxes = claimAdjacentBoxes(type, r, c);
+  const closed = claimAdjacentBoxes(type, r, c);
 
-  // History push
-  state.history.push({
-    type:'line',
-    ltype:type, r, c,
-    player: prevPlayer,
-    boxes: closedBoxes // [{row,col}]
-  });
+  // registra history per undo
+  state.history.push({ ltype:type, r, c, player: state.current, boxes: closed });
 
-  // Turno
-  if (closedBoxes.length === 0){
+  if (closed.length === 0){
     state.current = 1 - state.current;
   } else {
-    sfxBox();
+    // piccoli “pixel pulse” già via CSS animation
   }
   updateTurnUI();
 
-  // Fine partita?
+  // fine?
   const total = state.N * state.N;
   const claimed = document.querySelectorAll('.box.claimed').length;
   if (claimed === total){
-    setTimeout(()=> { showScore(true); sfxWin(); }, 140);
+    setTimeout(()=> showScore(true), 100);
   }
 }
 
-/** Controlla e assegna i box collegati alla linea appena tracciata */
 function claimAdjacentBoxes(type, r, c){
   const N = state.N;
   const boxes = [];
-
   const toCheck = [];
-  if (type === 'h'){
-    if (r > 0) toCheck.push({row:r-1, col:c});
-    if (r < N) toCheck.push({row:r, col:c});
+
+  if (type==='h'){
+    if (r>0) toCheck.push({row:r-1, col:c});
+    if (r<N) toCheck.push({row:r, col:c});
   } else {
-    if (c > 0) toCheck.push({row:r, col:c-1});
-    if (c < N) toCheck.push({row:r, col:c});
+    if (c>0) toCheck.push({row:r, col:c-1});
+    if (c<N) toCheck.push({row:r, col:c});
   }
 
   for (const pos of toCheck){
@@ -194,7 +162,6 @@ function claimAdjacentBoxes(type, r, c){
       boxes.push(pos);
     }
   }
-
   return boxes;
 }
 
@@ -203,6 +170,7 @@ function isBoxClosed(row, col){
   const bottom = document.querySelector(`.h-line[data-row="${row+1}"][data-col="${col}"]`);
   const left   = document.querySelector(`.v-line[data-row="${row}"][data-col="${col}"]`);
   const right  = document.querySelector(`.v-line[data-row="${row}"][data-col="${col+1}"]`);
+
   return !!(top && bottom && left && right &&
     top.classList.contains('drawn') &&
     bottom.classList.contains('drawn') &&
@@ -216,45 +184,38 @@ function claimBox(row, col){
 
   const me = state.players[state.current];
   box.classList.add('claimed');
+  box.style.backgroundColor = me.color;   // COLORE PIENO
+  box.style.color = '#000';
 
+  // se l'utente ha scelto una lettera, la usiamo come marchio “pixel”
   if (me.letter){
     box.textContent = me.letter;
-    box.style.color = me.color;
-  } else {
-    box.style.background = `linear-gradient(135deg, ${me.color}33 0%, ${me.color}22 100%)`;
-    box.style.boxShadow = `inset 0 0 26px ${me.color}22, 0 0 20px ${me.color}33`;
   }
-  // bagliore sottile
-  const shine = document.createElement('div');
-  shine.className = 'shine';
-  box.appendChild(shine);
-
   me.score++;
 }
 
-/** ======= Undo ======= */
+/** ===== Undo ===== */
 function undoMove(){
   const last = state.history.pop();
   if (!last) return;
 
-  // Ripristina turno precedente
+  // ripristina turno
   state.current = last.player;
 
-  // Se c’erano box conquistati, rimuovili
+  // rimuovi eventuali box chiusi
   if (last.boxes?.length){
     last.boxes.forEach(({row,col})=>{
       const box = document.querySelector(`.box[data-row="${row}"][data-col="${col}"]`);
       if (box){
         box.classList.remove('claimed');
-        box.style.background = ''; box.style.boxShadow = '';
+        box.style.backgroundColor = '';
         box.textContent = '';
       }
     });
-    // togli i punti dal giocatore precedente
     state.players[last.player].score -= last.boxes.length;
   }
 
-  // Togli la linea
+  // rimuovi la linea
   const sel = last.ltype === 'h'
     ? `.h-line[data-row="${last.r}"][data-col="${last.c}"]`
     : `.v-line[data-row="${last.r}"][data-col="${last.c}"]`;
@@ -267,41 +228,42 @@ function undoMove(){
   updateTurnUI();
 }
 
-/** ======= UI ======= */
+/** ===== UI ===== */
 function updateTurnUI(){
   const me = state.players[state.current];
-  const label = me.letter ? `Giocatore ${state.current+1} (${me.letter})` : `Giocatore ${state.current+1}`;
-  els.turnWho.textContent = label;
-  els.turnWho.style.color = me.color;
-  els.turnWho.style.textShadow = `0 0 8px ${me.color}66, 0 0 16px ${me.color}33`;
+  els.turnWho.textContent = `${me.name}${me.letter ? ` (${me.letter})` : ''}`;
+  els.turnWho.style.borderColor = '#223044';
+  els.turnWho.style.color = '#e9eef7';
+  els.turnWho.style.background = '#0b0f17';
 }
 
 function showScore(final=false){
   const p1 = state.players[0], p2 = state.players[1];
   els.scoreContent.innerHTML = '';
 
-  const line1 = document.createElement('div');
-  line1.className = 'score-line';
-  line1.innerHTML = `<span><span class="score-dot" style="background:${p1.color}"></span>
-    Giocatore 1 ${p1.letter?`(${p1.letter})`:''}</span><strong>${p1.score}</strong>`;
+  const l1 = document.createElement('div');
+  l1.className = 'score-line';
+  l1.innerHTML = `<span><i class="score-dot" style="background:${p1.color}"></i> ${p1.name}${p1.letter?` (${p1.letter})`:''}</span><strong>${p1.score}</strong>`;
 
-  const line2 = document.createElement('div');
-  line2.className = 'score-line';
-  line2.innerHTML = `<span><span class="score-dot" style="background:${p2.color}"></span>
-    Giocatore 2 ${p2.letter?`(${p2.letter})`:''}</span><strong>${p2.score}</strong>`;
+  const l2 = document.createElement('div');
+  l2.className = 'score-line';
+  l2.innerHTML = `<span><i class="score-dot" style="background:${p2.color}"></i> ${p2.name}${p2.letter?` (${p2.letter})`:''}</span><strong>${p2.score}</strong>`;
 
-  els.scoreContent.appendChild(line1);
-  els.scoreContent.appendChild(line2);
+  els.scoreContent.appendChild(l1);
+  els.scoreContent.appendChild(l2);
 
   if (final){
     const note = document.createElement('div');
-    note.style.marginTop = '8px'; note.style.color = '#ffd166';
-    const verdict = (p1.score===p2.score) ? 'Pareggio!' : (p1.score>p2.score ? 'Vince il Giocatore 1!' : 'Vince il Giocatore 2!');
-    note.textContent = `Partita conclusa • ${verdict}`;
+    note.style.marginTop = '8px';
+    note.style.color = '#9fb0c9';
+    note.textContent = p1.score===p2.score
+      ? 'Pareggio!'
+      : (p1.score>p2.score ? `${p1.name} vince!` : `${p2.name} vince!`);
     els.scoreContent.appendChild(note);
   }
 
-  try { els.scoreModal.showModal(); } catch { els.scoreModal.setAttribute('open',''); }
+  try { els.scoreModal.showModal(); }
+  catch { els.scoreModal.setAttribute('open',''); }
 }
 
 function resetToConfig(){
