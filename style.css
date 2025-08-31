@@ -1,0 +1,170 @@
+/* Stili generali del corpo della pagina */
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f2f5;
+    margin: 0;
+    color: #333;
+}
+
+/* Contenitori principali */
+#setup, #game-container {
+    background-color: white;
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+}
+
+h1, h2 {
+    color: #2c3e50;
+}
+
+/* Stili per la configurazione */
+.config-item, .player-config {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="number"], input[type="text"], input[type="color"] {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-left: 5px;
+}
+
+input[type="text"] {
+    width: 30px;
+    text-align: center;
+}
+
+/* Stili per i pulsanti */
+button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    margin: 5px;
+}
+
+button:hover {
+    background-color: #27ae60;
+}
+
+#new-game-btn {
+    background-color: #f39c12;
+}
+#new-game-btn:hover {
+    background-color: #e67e22;
+}
+
+/* Stili per la griglia di gioco */
+#board {
+    display: grid;
+    margin: 20px auto;
+}
+
+.dot {
+    width: 15px;
+    height: 15px;
+    background-color: #2c3e50;
+    border-radius: 50%;
+    place-self: center;
+}
+
+.line {
+    background-color: #ecf0f1;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.line:hover {
+    background-color: #bdc3c7;
+}
+
+.line.horizontal {
+    width: 100%;
+    height: 10px;
+    place-self: center;
+}
+
+.line.vertical {
+    width: 10px;
+    height: 100%;
+    place-self: center;
+}
+
+/* Stili per le linee prese e le scatole completate */
+.line.taken {
+    /* Il colore di sfondo viene impostato da JS */
+    cursor: not-allowed; /* MIGLIORAMENTO: Mostra che la linea non è più cliccabile */
+}
+
+.box {
+    place-self: stretch;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2em;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Stili per la finestra del punteggio (modal) */
+.modal {
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 300px;
+    border-radius: 10px;
+    text-align: center;
+    position: relative;
+}
+
+.close-btn {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: black;
+}
+
+/* Utilità per nascondere elementi */
+.hidden {
+    display: none;
+}
