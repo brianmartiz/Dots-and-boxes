@@ -1,291 +1,293 @@
-'use strict';
+// script.js - Game logic for Neon Dots & Boxes
 
-/** Stato di gioco */
-const state = {
-  N: 0,                // quadrati per lato
-  current: 0,          // 0: P1, 1: P2
-  players: [
-    { letter: '', color: '#00e5ff', score: 0 },
-    { letter: '', color: '#ff3df7', score: 0 }
-  ],
-};
+document.addEventListener('DOMContentLoaded', () => {
+    const startBtn = document.getElementById('startBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const toggleScoreBtn = document.getElementById('toggleScoreBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const settingsDiv = document.getElementById('settings');
+    const controlsDiv = document.getElementById('controls');
+    const scoreboardDiv = document.getElementById('scoreboard');
+    const gameBoardDiv = document.getElementById('gameBoard');
+    const endScreenDiv = document.getElementById('endScreen');
+    const endMessageDiv = document.getElementById('endMessage');
+    const score1Div = document.getElementById('score1');
+    const score2Div = document.getElementById('score2');
 
-const els = {}; // popolato in init()
+    const soundClick = document.getElementById('soundClick');
+    const soundComplete = document.getElementById('soundComplete');
+    const soundWin = document.getElementById('soundWin');
 
-/** Utils */
-const clamp = (min, v, max) => Math.max(min, Math.min(v, max));
-const uc1 = (s) => (s || '').trim().slice(0,1).toUpperCase();
+    let n, currentPlayer, players, hEdges, vEdges, hOwners, vOwners, boxesOwner, scores;
+    let history = [];
 
-document.addEventListener('DOMContentLoaded', init);
+    startBtn.addEventListener('click', startGame);
+    undoBtn.addEventListener('click', undoMove);
+    toggleScoreBtn.addEventListener('click', toggleScore);
+    restartBtn.addEventListener('click', () => location.reload());
 
-function init(){
-  // Mappo gli elementi SOLO ora che il DOM è pronto
-  Object.assign(els, {
-    config: document.getElementById('config'),
-    gridSize: document.getElementById('gridSize'),
-    p1Letter: document.getElementById('p1Letter'),
-    p1Color: document.getElementById('p1Color'),
-    p2Letter: document.getElementById('p2Letter'),
-    p2Color: document.getElementById('p2Color'),
-    startBtn: document.getElementById('startBtn'),
+    function startGame() {
+        // Initialize settings
+        n = parseInt(document.getElementById('gridSize').value);
+        if (isNaN(n) || n < 2 || n > 10) {
+            alert('Please enter a grid size between 2 and 10.');
+            return;
+        }
+        const p1Name = document.getElementById('p1Name').value || 'A';
+        const p2Name = document.getElementById('p2Name').value || 'B';
+        const p1Color = document.getElementById('p1Color').value;
+        const p2Color = document.getElementById('p2Color').value;
 
-    gameArea: document.getElementById('gameArea'),
-    board: document.getElementById('board'),
-    turnIndicator: document.getElementById('turnIndicator'),
-    turnWho: document.getElementById('turnWho'),
-    scoreBtn: document.getElementById('scoreBtn'),
-    newBtn: document.getElementById('newBtn'),
+        players = [
+            {name: p1Name, color: p1Color},
+            {name: p2Name, color: p2Color}
+        ];
+        currentPlayer = 0;
+        scores = [0, 0];
 
-    scoreModal: document.getElementById('scoreModal'),
-    scoreContent: document.getElementById('scoreContent'),
-    closeScore: document.getElementById('closeScore'),
-  });
+        // Set CSS variables for colors
+        document.documentElement.style.setProperty('--p1-color', p1Color);
+        document.documentElement.style.setProperty('--p2-color', p2Color);
 
-  // Piccolo sanity check in console per debugging
-  ['startBtn','board','gridSize'].forEach(id=>{
-    if(!els[id]) console.warn(`[dots&boxes] elemento mancante: ${id}`);
-  });
+        // Hide settings, show game UI
+        settingsDiv.classList.add('hidden');
+        controlsDiv.classList.remove('hidden');
+        gameBoardDiv.classList.remove('hidden');
+        score1Div.textContent = players[0].name + ': 0';
+        score2Div.textContent = players[1].name + ': 0';
 
-  // Eventi UI (con optional chaining in caso di customizzazioni future)
-  els.startBtn?.addEventListener('click', startGame);
-  els.scoreBtn?.addEventListener('click', () => showScore(false));
-  els.closeScore?.addEventListener('click', () => {
-    try { els.scoreModal.close(); } catch { els.scoreModal.removeAttribute('open'); }
-  });
-  els.newBtn?.addEventListener('click', resetToConfig);
-}
+        // Initialize game state
+        hEdges = Array.from({ length: n+1 }, () => Array(n).fill(false));
+        vEdges = Array.from({ length: n }, () => Array(n+1).fill(false));
+        hOwners = Array.from({ length: n+1 }, () => Array(n).fill(null));
+        vOwners = Array.from({ length: n }, () => Array(n+1).fill(null));
+        boxesOwner = Array.from({ length: n }, () => Array(n).fill(null));
+        history = [];
 
-/** Avvia nuova partita */
-function startGame(){
-  const N = clamp(1, parseInt(els.gridSize.value, 10) || 4, 10);
-  state.N = N;
-
-  state.players[0].letter = uc1(els.p1Letter.value);
-  state.players[0].color  = els.p1Color.value || '#00e5ff';
-  state.players[1].letter = uc1(els.p2Letter.value);
-  state.players[1].color  = els.p2Color.value || '#ff3df7';
-  state.players[0].score = 0;
-  state.players[1].score = 0;
-  state.current = 0;
-
-  buildBoard(N);
-
-  els.config.hidden = true;
-  els.gameArea.hidden = false;
-  updateTurnUI();
-}
-
-/** Ricostruisce la board come griglia (2N+1)x(2N+1) */
-function buildBoard(N){
-  const R = 2*N + 1;
-  els.board.innerHTML = ''; // reset
-  els.board.style.gridTemplateColumns = `repeat(${R}, 1fr)`;
-  els.board.style.gridTemplateRows = `repeat(${R}, 1fr)`;
-
-  for (let r = 0; r < R; r++){
-    for (let c = 0; c < R; c++){
-      const cell = document.createElement('div');
-
-      if (r % 2 === 0 && c % 2 === 0){
-        // Punto
-        cell.className = 'dot';
-        cell.setAttribute('role','presentation');
-
-      } else if (r % 2 === 0 && c % 2 === 1){
-        // Linea orizzontale: row: 0..N, col: 0..N-1
-        const row = r/2;
-        const col = (c-1)/2;
-        cell.className = 'h-line';
-        cell.dataset.row = String(row);
-        cell.dataset.col = String(col);
-        cell.setAttribute('aria-label', `Linea orizzontale r${row} c${col}`);
-        cell.addEventListener('click', onLineClick, { passive: true });
-
-      } else if (r % 2 === 1 && c % 2 === 0){
-        // Linea verticale: row: 0..N-1, col: 0..N
-        const row = (r-1)/2;
-        const col = c/2;
-        cell.className = 'v-line';
-        cell.dataset.row = String(row);
-        cell.dataset.col = String(col);
-        cell.setAttribute('aria-label', `Linea verticale r${row} c${col}`);
-        cell.addEventListener('click', onLineClick, { passive: true });
-
-      } else {
-        // Box: 0..N-1, 0..N-1
-        const row = (r-1)/2;
-        const col = (c-1)/2;
-        cell.className = 'box';
-        cell.dataset.row = String(row);
-        cell.dataset.col = String(col);
-        cell.setAttribute('role','gridcell');
-      }
-
-      els.board.appendChild(cell);
+        buildBoard();
     }
-  }
-}
 
-/** Gestione click su una linea */
-function onLineClick(ev){
-  const line = ev.currentTarget;
-  if (line.classList.contains('drawn')) return; // già tracciata
-
-  // Colora la linea con il colore del giocatore corrente
-  const drawColor = state.players[state.current].color;
-  line.style.setProperty('--draw', drawColor);
-  line.classList.add('drawn');
-
-  // Dopo aver tracciato, verifica se chiude uno o più box
-  const type = line.classList.contains('h-line') ? 'h' : 'v';
-  const r = parseInt(line.dataset.row, 10);
-  const c = parseInt(line.dataset.col, 10);
-
-  const closedAny = checkAndClaimBoxes(type, r, c);
-
-  // Se non ha chiuso nulla → cambio turno
-  if (!closedAny){
-    state.current = 1 - state.current;
-  }
-
-  updateTurnUI();
-
-  // Fine partita?
-  const totalBoxes = state.N * state.N;
-  const claimed = document.querySelectorAll('.box.claimed').length;
-  if (claimed === totalBoxes){
-    setTimeout(() => showScore(true), 120); // mostra punteggio finale
-  }
-}
-
-/** Controlla i box adiacenti alla linea e li assegna se chiusi */
-function checkAndClaimBoxes(type, r, c){
-  const N = state.N;
-  let closed = false;
-  const checks = [];
-
-  if (type === 'h'){
-    // sopra (r-1, c) se r>0; sotto (r, c) se r<N
-    if (r > 0) checks.push({row: r-1, col: c});
-    if (r < N) checks.push({row: r,   col: c});
-  } else {
-    // sinistra (r, c-1) se c>0; destra (r, c) se c<N
-    if (c > 0) checks.push({row: r, col: c-1});
-    if (c < N) checks.push({row: r, col: c});
-  }
-
-  for (const pos of checks){
-    if (isBoxClosed(pos.row, pos.col)){
-      claimBox(pos.row, pos.col);
-      closed = true;
+    function buildBoard() {
+        // Clear existing board
+        gameBoardDiv.innerHTML = '';
+        // set grid template
+        gameBoardDiv.style.gridTemplateColumns = `repeat(${2*n+1}, auto)`;
+        // create grid cells
+        for (let r = 0; r < 2*n+1; r++) {
+            for (let c = 0; c < 2*n+1; c++) {
+                if (r % 2 === 0 && c % 2 === 0) {
+                    // Dot
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    gameBoardDiv.appendChild(dot);
+                } else if (r % 2 === 0 && c % 2 === 1) {
+                    // Horizontal edge
+                    const edge = document.createElement('div');
+                    edge.className = 'edge-h';
+                    edge.dataset.row = r / 2;
+                    edge.dataset.col = (c-1) / 2;
+                    edge.addEventListener('click', () => selectEdge(edge, 'h'));
+                    gameBoardDiv.appendChild(edge);
+                } else if (r % 2 === 1 && c % 2 === 0) {
+                    // Vertical edge
+                    const edge = document.createElement('div');
+                    edge.className = 'edge-v';
+                    edge.dataset.row = (r-1) / 2;
+                    edge.dataset.col = c / 2;
+                    edge.addEventListener('click', () => selectEdge(edge, 'v'));
+                    gameBoardDiv.appendChild(edge);
+                } else {
+                    // Box
+                    const box = document.createElement('div');
+                    box.className = 'box';
+                    box.dataset.row = (r-1) / 2;
+                    box.dataset.col = (c-1) / 2;
+                    gameBoardDiv.appendChild(box);
+                }
+            }
+        }
     }
-  }
 
-  return closed;
-}
+    function selectEdge(edgeElem, type) {
+        // get coordinates
+        const r = parseInt(edgeElem.dataset.row);
+        const c = parseInt(edgeElem.dataset.col);
+        // Check if already selected
+        if (type === 'h' && hEdges[r][c]) return;
+        if (type === 'v' && vEdges[r][c]) return;
+        // Save state for undo
+        saveHistory();
+        // Mark edge
+        if (type === 'h') {
+            hEdges[r][c] = true;
+            hOwners[r][c] = currentPlayer;
+        } else {
+            vEdges[r][c] = true;
+            vOwners[r][c] = currentPlayer;
+        }
+        // Update UI for edge
+        edgeElem.classList.add('player' + (currentPlayer+1));
+        // Play click sound
+        soundClick.currentTime = 0;
+        soundClick.play().catch(e => {});
+        // Check for completed boxes
+        let completed = false;
+        // Check boxes around this edge
+        if (type === 'h') {
+            // above box
+            if (r > 0) {
+                if (hEdges[r-1][c] && vEdges[r-1][c] && vEdges[r-1][c+1]) {
+                    claimBox(r-1, c);
+                    completed = true;
+                }
+            }
+            // below box
+            if (r < n) {
+                if (hEdges[r+1][c] && vEdges[r][c] && vEdges[r][c+1]) {
+                    claimBox(r, c);
+                    completed = true;
+                }
+            }
+        } else {
+            // left box
+            if (c > 0) {
+                if (vEdges[r][c-1] && hEdges[r][c-1] && hEdges[r+1][c-1]) {
+                    claimBox(r, c-1);
+                    completed = true;
+                }
+            }
+            // right box
+            if (c < n) {
+                if (vEdges[r][c+1] && hEdges[r][c] && hEdges[r+1][c]) {
+                    claimBox(r, c);
+                    completed = true;
+                }
+            }
+        }
+        if (completed) {
+            // play box complete sound
+            soundComplete.currentTime = 0;
+            soundComplete.play().catch(e => {});
+            // same player moves again
+        } else {
+            // change player
+            currentPlayer = 1 - currentPlayer;
+        }
+        updateScores();
+        // Check for end of game
+        if (scores[0] + scores[1] === n * n) {
+            endGame();
+        }
+    }
 
-/** True se tutti e 4 i lati del box (row,col) sono tracciati */
-function isBoxClosed(row, col){
-  const top    = document.querySelector(`.h-line[data-row="${row}"][data-col="${col}"]`);
-  const bottom = document.querySelector(`.h-line[data-row="${row+1}"][data-col="${col}"]`);
-  const left   = document.querySelector(`.v-line[data-row="${row}"][data-col="${col}"]`);
-  const right  = document.querySelector(`.v-line[data-row="${row}"][data-col="${col+1}"]`);
+    function claimBox(r, c) {
+        // Only claim if not already claimed
+        if (boxesOwner[r][c] === null) {
+            boxesOwner[r][c] = currentPlayer;
+            scores[currentPlayer]++;
+            // color the box
+            const boxElem = document.querySelector(`.box[data-row='${r}'][data-col='${c}']`);
+            if (boxElem) {
+                boxElem.classList.add('player' + (currentPlayer+1));
+                // add player letter
+                const span = document.createElement('span');
+                span.textContent = players[currentPlayer].name;
+                boxElem.appendChild(span);
+            }
+        }
+    }
 
-  return !!(top && bottom && left && right &&
-            top.classList.contains('drawn') &&
-            bottom.classList.contains('drawn') &&
-            left.classList.contains('drawn') &&
-            right.classList.contains('drawn'));
-}
+    function updateScores() {
+        score1Div.textContent = players[0].name + ': ' + scores[0];
+        score2Div.textContent = players[1].name + ': ' + scores[1];
+    }
 
-/** Assegna il box al giocatore corrente (lettera o colore), incrementa punteggio */
-function claimBox(row, col){
-  const box = document.querySelector(`.box[data-row="${row}"][data-col="${col}"]`);
-  if (!box || box.classList.contains('claimed')) return;
+    function endGame() {
+        endScreenDiv.classList.remove('hidden');
+        // Determine winner or tie
+        let msg;
+        if (scores[0] > scores[1]) {
+            msg = players[0].name + ' wins!';
+        } else if (scores[1] > scores[0]) {
+            msg = players[1].name + ' wins!';
+        } else {
+            msg = "It's a tie!";
+        }
+        endMessageDiv.textContent = msg;
+        // Play win sound
+        soundWin.currentTime = 0;
+        soundWin.play().catch(e => {});
+    }
 
-  box.classList.add('claimed');
+    function saveHistory() {
+        const state = {
+            h: hEdges.map(arr => arr.slice()),
+            v: vEdges.map(arr => arr.slice()),
+            hOwners: hOwners.map(arr => arr.slice()),
+            vOwners: vOwners.map(arr => arr.slice()),
+            boxes: boxesOwner.map(arr => arr.slice()),
+            currentPlayer: currentPlayer,
+            scores: [...scores]
+        };
+        history.push(state);
+    }
 
-  const me = state.players[state.current];
-  if (me.letter){
-    box.textContent = me.letter;
-    box.style.color = me.color;
-  } else {
-    box.style.background = `linear-gradient(135deg, ${me.color}33 0%, ${me.color}22 100%)`;
-    box.style.boxShadow = `inset 0 0 26px ${me.color}22, 0 0 20px ${me.color}33`;
-  }
+    function undoMove() {
+        if (history.length === 0) return;
+        const prev = history.pop();
+        hEdges = prev.h;
+        vEdges = prev.v;
+        hOwners = prev.hOwners;
+        vOwners = prev.vOwners;
+        boxesOwner = prev.boxes;
+        currentPlayer = prev.currentPlayer;
+        scores = prev.scores;
+        // Remove all edge and box styles
+        document.querySelectorAll('.edge-h, .edge-v').forEach(e => {
+            e.className = e.className.split(' ')[0]; // remove player classes
+        });
+        document.querySelectorAll('.box').forEach(b => {
+            b.className = 'box';
+            b.textContent = '';
+        });
+        // Reapply edges from owners
+        for (let r = 0; r < hOwners.length; r++) {
+            for (let c = 0; c < hOwners[r].length; c++) {
+                const owner = hOwners[r][c];
+                if (owner !== null) {
+                    const edge = document.querySelector(`.edge-h[data-row='${r}'][data-col='${c}']`);
+                    if (edge) edge.classList.add('player' + (owner+1));
+                }
+            }
+        }
+        for (let r = 0; r < vOwners.length; r++) {
+            for (let c = 0; c < vOwners[r].length; c++) {
+                const owner = vOwners[r][c];
+                if (owner !== null) {
+                    const edge = document.querySelector(`.edge-v[data-row='${r}'][data-col='${c}']`);
+                    if (edge) edge.classList.add('player' + (owner+1));
+                }
+            }
+        }
+        // Reapply boxes
+        for (let r = 0; r < n; r++) {
+            for (let c = 0; c < n; c++) {
+                const owner = boxesOwner[r][c];
+                if (owner !== null) {
+                    const box = document.querySelector(`.box[data-row='${r}'][data-col='${c}']`);
+                    if (box) {
+                        box.classList.add('player' + (owner+1));
+                        const span = document.createElement('span');
+                        span.textContent = players[owner].name;
+                        box.appendChild(span);
+                    }
+                }
+            }
+        }
+        updateScores();
+    }
 
-  me.score++;
-}
-
-/** Aggiorna indicatore di turno */
-function updateTurnUI(){
-  const me = state.players[state.current];
-  const label = me.letter ? `Giocatore ${state.current+1} (${me.letter})`
-                          : `Giocatore ${state.current+1}`;
-  const el = document.getElementById('turnWho');
-  if (el){
-    el.textContent = label;
-    el.style.color = me.color;
-    el.style.textShadow = `0 0 8px ${me.color}66, 0 0 16px ${me.color}33`;
-  }
-}
-
-/** Mostra il punteggio (se final=true aggiunge nota di fine) */
-function showScore(final=false){
-  const p1 = state.players[0], p2 = state.players[1];
-  const container = document.getElementById('scoreContent');
-  const modal = document.getElementById('scoreModal');
-  if (!container || !modal) return;
-
-  container.innerHTML = '';
-
-  const line1 = document.createElement('div');
-  line1.className = 'score-line';
-  line1.innerHTML = `
-    <span><span class="score-dot" style="background:${p1.color}"></span>
-      Giocatore 1 ${p1.letter ? `(${p1.letter})` : ''}</span>
-    <strong>${p1.score}</strong>
-  `;
-
-  const line2 = document.createElement('div');
-  line2.className = 'score-line';
-  line2.innerHTML = `
-    <span><span class="score-dot" style="background:${p2.color}"></span>
-      Giocatore 2 ${p2.letter ? `(${p2.letter})` : ''}</span>
-    <strong>${p2.score}</strong>
-  `;
-
-  container.appendChild(line1);
-  container.appendChild(line2);
-
-  if (final){
-    const note = document.createElement('div');
-    note.style.marginTop = '8px';
-    note.style.color = '#ffd166';
-    const verdict = (p1.score===p2.score) ? 'Pareggio!' : (p1.score>p2.score ? 'Vince il Giocatore 1!' : 'Vince il Giocatore 2!');
-    note.textContent = `Partita conclusa • ${verdict}`;
-    container.appendChild(note);
-  }
-
-  try { modal.showModal(); }
-  catch { modal.setAttribute('open',''); } // fallback iOS vecchi
-}
-
-/** Torna alla configurazione */
-function resetToConfig(){
-  const board = document.getElementById('board');
-  if (board) board.innerHTML = '';
-  state.N = 0;
-  state.current = 0;
-  state.players[0].score = state.players[1].score = 0;
-
-  const gameArea = document.getElementById('gameArea');
-  const config = document.getElementById('config');
-  if (gameArea) gameArea.hidden = true;
-  if (config) config.hidden = false;
-
-  const modal = document.getElementById('scoreModal');
-  if (modal?.open) { try { modal.close(); } catch { modal.removeAttribute('open'); } }
-}
-
-/* Fine */
+    function toggleScore() {
+        scoreboardDiv.classList.toggle('hidden');
+    }
+});
