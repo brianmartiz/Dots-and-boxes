@@ -4,40 +4,51 @@
   <meta charset="UTF-8" />
   <title>Dots & Boxes — Neon 70s</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Facoltativo: font retrò -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Font retrò -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Archivo:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="theme-dark">
   <header class="app-header">
     <h1 class="neon-title">Dots & Boxes</h1>
-    <p class="subtitle">Tema neon anni ’70 • due giocatori sullo stesso dispositivo</p>
+    <p class="subtitle">Neon ’70s • due giocatori sullo stesso dispositivo</p>
+    <div class="neon-divider" aria-hidden="true"></div>
   </header>
 
   <!-- Pannello configurazione -->
-  <section id="config" class="panel">
-    <div class="row">
-      <label for="gridSize">Dimensione (quadrati per lato):</label>
-      <input id="gridSize" type="number" min="1" max="10" value="4" />
+  <section id="config" class="panel neon-card">
+    <h2 class="panel-title">Impostazioni partita</h2>
+    <div class="row grid-2">
+      <label for="gridSize" class="field">
+        <span class="label">Dimensione (quadrati per lato)</span>
+        <input id="gridSize" type="number" min="1" max="10" value="4" />
+        <small class="help">Da 1×1 fino a 10×10</small>
+      </label>
+
+      <div class="field fake-field"></div>
     </div>
 
     <div class="row players">
-      <div class="player-card">
+      <div class="player-card neon-subcard">
         <h3><span class="badge p1"></span> Giocatore 1</h3>
-        <label>Lettera (opzionale)
+        <label class="field">
+          <span class="label">Lettera (opzionale)</span>
           <input id="p1Letter" type="text" maxlength="1" placeholder="A" />
         </label>
-        <label>Colore
+        <label class="field">
+          <span class="label">Colore</span>
           <input id="p1Color" type="color" value="#00e5ff" />
         </label>
       </div>
 
-      <div class="player-card">
+      <div class="player-card neon-subcard">
         <h3><span class="badge p2"></span> Giocatore 2</h3>
-        <label>Lettera (opzionale)
+        <label class="field">
+          <span class="label">Lettera (opzionale)</span>
           <input id="p2Letter" type="text" maxlength="1" placeholder="B" />
         </label>
-        <label>Colore
+        <label class="field">
+          <span class="label">Colore</span>
           <input id="p2Color" type="color" value="#ff3df7" />
         </label>
       </div>
@@ -50,7 +61,7 @@
   </section>
 
   <!-- Area di gioco -->
-  <section id="gameArea" class="panel" hidden>
+  <section id="gameArea" class="panel neon-card" hidden>
     <div class="topbar">
       <div id="turnIndicator" class="turn-indicator">
         Turno: <span id="turnWho" class="who"></span>
@@ -61,8 +72,9 @@
       </div>
     </div>
 
-    <div id="boardWrapper">
+    <div id="boardWrapper" class="board-wrapper">
       <div id="board" class="board" aria-label="griglia di gioco" role="grid"></div>
+      <div class="board-glow" aria-hidden="true"></div>
     </div>
   </section>
 
@@ -76,6 +88,7 @@
   </dialog>
 
   <footer class="app-footer">
+    <div class="neon-divider small" aria-hidden="true"></div>
     <small>Solo HTML/CSS/JS • Nessun backend • Pronto per Netlify</small>
   </footer>
 
