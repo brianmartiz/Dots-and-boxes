@@ -1,156 +1,157 @@
-/* --- IMPOSTAZIONI GENERALI E TEMA NEON --- */
-:root {
-    --color-background: #0d0221;
-    --color-p1: #00f6ff; /* Ciano */
-    --color-p2: #ff00e5; /* Magenta */
-    --color-neutral-glow: #f0f0f0;
-    --color-text: #e0e0e0;
-    --border-color: rgba(255, 255, 255, 0.2);
-    --font-title: 'Press Start 2P', cursive;
-    --font-body: 'Roboto Mono', monospace;
+:root{
+  --bg: #0a0f1f;
+  --panel: #0d1530;
+  --text: #e6f0ff;
+  --muted: #93a5cfbb;
+
+  --neon-cyan: #00e5ff;
+  --neon-magenta: #ff3df7;
+  --neon-amber: #ffd166;
+
+  --line-idle: #26325a;
+  --line-hover: #3b4d86;
+  --dot-core: #b7cffb;
+
+  --shadow-lg: 0 0 22px #0008;
 }
 
-body {
-    font-family: var(--font-body);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: var(--color-background);
-    margin: 0;
-    color: var(--color-text);
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: radial-gradient(1200px 800px at 70% 10%, #101735 0%, #0a0f1f 55%, #070b16 100%) fixed;
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Orbitron', sans-serif;
+  line-height: 1.4;
+  margin: 0;
 }
 
-/* --- CARD PRINCIPALI (SETUP E GIOCO) --- */
-#setup, #game-container {
-    background-color: rgba(0, 0, 0, 0.3);
-    padding: 30px 40px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 0 15px rgba(0, 246, 255, 0.1), 0 0 20px rgba(255, 0, 229, 0.1);
-    text-align: center;
-    width: 90%;
-    max-width: 480px;
+.app-header, .app-footer { text-align: center; }
+.app-header { padding: 18px 12px 6px; }
+.app-footer { padding: 10px; color: var(--muted); }
+
+.neon-title{
+  font-family: 'Orbitron', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-size: clamp(22px, 3vw, 34px);
+  color: var(--neon-cyan);
+  text-shadow:
+    0 0 6px #00e5ffaa,
+    0 0 18px #00e5ff55,
+    0 0 36px #00e5ff33;
+  margin: 0 0 4px;
+}
+.subtitle { color: var(--muted); margin: 0; font-size: 0.95rem; }
+
+.panel{
+  width: min(960px, 92vw);
+  margin: 14px auto;
+  background: linear-gradient(180deg, #0f1635 0%, #0b112b 100%);
+  border: 1px solid #1b2a5f;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow:
+    0 0 0 1px #0a1442 inset,
+    0 10px 30px #0008;
 }
 
-/* --- TESTI E TITOLI NEON --- */
-.neon-title {
-    font-family: var(--font-title);
-    font-size: 2em;
-    color: #fff;
-    text-shadow:
-        0 0 5px var(--color-neutral-glow),
-        0 0 10px var(--color-p1),
-        0 0 20px var(--color-p2);
+.row{ display: grid; gap: 12px; margin-bottom: 12px; }
+.row.players{ grid-template-columns: 1fr; }
+@media (min-width: 740px){
+  .row.players{ grid-template-columns: 1fr 1fr; }
 }
 
-h2 {
-    font-family: var(--font-body);
-    font-weight: 700;
-    margin-bottom: 20px;
+.player-card{
+  background: #0c1431;
+  border: 1px solid #20307a;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: var(--shadow-lg);
 }
-.player-config:first-of-type h2 { color: var(--color-p1); }
-.player-config:last-of-type h2 { color: var(--color-p2); }
+.player-card h3{ margin: 0 0 8px; font-weight: 700; }
+.badge{
+  display: inline-block;
+  width: 10px; height: 10px; border-radius: 50%;
+  margin-right: 6px; vertical-align: baseline;
+  box-shadow: 0 0 10px currentColor;
+}
+.badge.p1{ color: var(--neon-cyan); background: var(--neon-cyan); }
+.badge.p2{ color: var(--neon-magenta); background: var(--neon-magenta); }
 
-/* --- ELEMENTI DEL FORM --- */
-label {
-    margin-bottom: 8px;
-    font-weight: 400;
+label{ display: grid; gap: 6px; text-align: left; font-size: 0.95rem; }
+input[type="text"], input[type="number"], input[type="color"]{
+  width: 100%;
+  padding: 10px 12px;
+  background: #0a1127;
+  color: var(--text);
+  border: 1px solid #23306a;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
 }
-input[type="number"], input[type="text"] {
-    background-color: #1a1a1a;
-    color: var(--color-text);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 10px;
-    text-align: center;
-    font-family: var(--font-body);
-    transition: all 0.3s;
-}
-input:focus {
-    border-color: var(--color-p1);
-    box-shadow: 0 0 10px var(--color-p1);
-    outline: none;
-}
-
-/* --- PULSANTI NEON --- */
-button {
-    font-family: var(--font-title);
-    font-size: 14px;
-    color: var(--color-text);
-    background-color: transparent;
-    border: 2px solid var(--color-text);
-    border-radius: 8px;
-    padding: 12px 20px;
-    cursor: pointer;
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
-    transition: all 0.3s ease;
-    margin: 10px 5px;
-}
-button:hover {
-    color: white;
-    background-color: var(--color-p1);
-    border-color: var(--color-p1);
-    box-shadow: 0 0 20px var(--color-p1);
-}
-#new-game-btn:hover {
-    background-color: var(--color-p2);
-    border-color: var(--color-p2);
-    box-shadow: 0 0 20px var(--color-p2);
+input[type="text"]:focus, input[type="number"]:focus, input[type="color"]:focus{
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px #00e5ff44;
 }
 
-/* --- GRIGLIA DI GIOCO NEON --- */
-#board {
-    display: grid;
-    margin: 25px auto;
-    gap: 4px;
+.actions{ display: flex; gap: 10px; justify-content: center; }
+.btn{
+  appearance: none; border: 1px solid #2b3b7f; color: var(--text);
+  padding: 10px 14px; background: #121c41; border-radius: 10px; cursor: pointer;
+  transition: transform .08s ease, box-shadow .2s, border-color .2s;
 }
-.dot {
-    width: 10px;
-    height: 10px;
-    background-color: var(--color-neutral-glow);
-    border-radius: 50%;
-    place-self: center;
-    box-shadow: 0 0 8px var(--color-neutral-glow);
+.btn:hover{ box-shadow: 0 0 12px #ffffff22; border-color: #3a4faa; }
+.btn:active{ transform: translateY(1px); }
+.btn.primary{
+  background: radial-gradient(120px 60px at 70% 10%, #0ff 0%, #0af 60%, #014 100%);
+  border-color: #2ae9ff; box-shadow: 0 0 18px #00e5ff55;
 }
-.line {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.2s;
+.btn.ghost{
+  background: transparent; border-color: #40519b; color: #bcd2ff;
 }
-.line:hover {
-    background-color: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+.hint{ color: var(--muted); text-align: center; margin: 0; }
+
+.topbar{
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+  margin-bottom: 10px;
 }
-.line.horizontal { width: 100%; height: 6px; place-self: center; }
-.line.vertical { width: 6px; height: 100%; place-self: center; }
-.line.taken { cursor: not-allowed; }
-.box {
-    place-self: stretch;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: var(--font-title);
-    font-size: 2em;
-    border-radius: 8px;
-    transition: all 0.3s ease;
+.controls{ display: flex; gap: 8px; }
+
+.turn-indicator{
+  font-weight: 700;
+  color: #dce6ff;
+}
+.turn-indicator .who{
+  padding: 2px 8px; border-radius: 999px;
+  background: #0c1431; border: 1px solid #22327a;
+  text-shadow: 0 0 10px currentColor;
 }
 
-/* --- INDICATORE DI TURNO --- */
-#turn-indicator {
-    font-size: 1.2em;
-    font-weight: 700;
-    transition: all 0.3s ease;
+#boardWrapper{
+  display: grid; place-items: center;
+}
+.board{
+  /* quadrato fluido */
+  width: min(92vw, 78vh);
+  aspect-ratio: 1 / 1;
+  margin: 6px auto;
+  display: grid;
+  /* righe/colonne impostate via JS */
+  gap: 0; /* gli spazi sono gestiti dagli elementi */
+  user-select: none;
+  touch-action: manipulation;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 2px #1a2558, 0 16px 40px #0009;
+  background: radial-gradient(400px 200px at 50% 30%, #0c1431 0%, #0a1127 60%, #081022 100%);
 }
 
-/* --- FINESTRA DEL PUNTEGGIO (MODAL) --- */
-.modal { background-color: rgba(0, 0, 0, 0.7); }
-.modal-content {
-    background-color: var(--color-background);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    box-shadow: 0 0 25px rgba(255, 255, 255, 0.2);
+/* ——— Dot (punto) ——— */
+.dot{
+  display: grid; place-items: center;
 }
-.close-btn:hover { color: white; }
-.hidden { display: none; }
+.dot::before{
+  content: '';
+  width: 48%;
+  height: 48%;
+  border-radius: 
