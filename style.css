@@ -137,3 +137,56 @@ input:focus{outline:2px solid #2a6cff; outline-offset:2px}
 
 /* Footer */
 .app-footer{ text-align:center; color:var(--muted); padding:12px 0 }
+
+/* === Neon frame minimal (UI esterna) === */
+.theme-neon .title{
+  letter-spacing:.03em;
+  text-shadow: 0 0 4px #00e5ff66, 0 0 14px #00e5ff33;
+}
+
+.theme-neon .panel{
+  position: relative;
+  box-shadow: 0 10px 30px #0008;
+}
+.theme-neon .panel::before{
+  content:"";
+  position:absolute; inset:-2px;
+  border-radius: var(--radius);
+  background: conic-gradient(from 0deg, #00e5ff22, #ff3df722, #ffd16622, #00e5ff22);
+  filter: blur(14px);
+  z-index:-1; opacity:.55;
+}
+
+/* bordo “neon” intorno al campo, ma contenuto (pixel) rimane flat */
+.theme-neon .board-wrap{ position: relative; }
+.theme-neon .board-wrap::before{
+  content:"";
+  position:absolute; inset:-10px;
+  border-radius: calc(var(--radius) + 6px);
+  background: conic-gradient(from 0deg, #00e5ff22, #ff3df722, #ffd16622, #00e5ff22);
+  filter: blur(22px);
+  z-index:-1; opacity:.5; pointer-events:none;
+}
+
+/* pill turno con accento dinamico */
+.theme-neon .pill{
+  border-color: transparent;
+  color: #fff;
+  background: #0b0f17;
+  box-shadow:
+    0 0 0 2px var(--active, #2a6cff) inset,
+    0 0 12px color-mix(in srgb, var(--active, #2a6cff) 65%, transparent);
+}
+
+/* i pulsanti restano centrati, ma hanno un profilo neon sobrio */
+.theme-neon .btn{
+  border-color:#344766;
+}
+.theme-neon .btn.primary{
+  background:#0c1f4d;
+  border-color: #2ae9ff;
+  box-shadow: 0 0 10px #00e5ff33 inset, 0 0 10px #00e5ff22;
+}
+.theme-neon .btn:hover{
+  box-shadow: 0 0 10px #ffffff18, 0 0 10px #00e5ff18 inset;
+}
