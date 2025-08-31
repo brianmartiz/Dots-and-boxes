@@ -2,99 +2,101 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <title>Dots & Boxes — Neon 70s</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Archivo:wght@400;600&display=swap" rel="stylesheet">
-  <!-- CSS con cache buster -->
-  <link rel="stylesheet" href="./style.css?v=neon3" />
+  <title>Dots & Boxes — Pixel Mosaic</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css?v=pixel1">
 </head>
-<body class="theme-dark">
+<body>
   <header class="app-header">
-    <h1 class="neon-title">Dots & Boxes</h1>
-    <p class="subtitle">Neon ’70s • due giocatori sullo stesso dispositivo</p>
-    <div class="neon-divider" aria-hidden="true"></div>
+    <h1 class="title">Dots & Boxes</h1>
+    <p class="subtitle">Pixel Mosaic • due giocatori sullo stesso dispositivo</p>
   </header>
 
-  <!-- Pannello configurazione -->
-  <section id="config" class="panel neon-card">
-    <h2 class="panel-title">Impostazioni partita</h2>
-    <div class="row grid-2">
-      <label for="gridSize" class="field">
+  <!-- Config -->
+  <section id="config" class="panel container">
+    <h2 class="h2">Impostazioni</h2>
+
+    <div class="grid-2">
+      <label class="field">
         <span class="label">Dimensione (quadrati per lato)</span>
-        <input id="gridSize" type="number" min="1" max="10" value="4" />
-        <small class="help">Da 1×1 fino a 10×10</small>
+        <input id="gridSize" type="number" min="1" max="10" value="5" />
+        <small class="help">Da 1×1 a 10×10</small>
       </label>
-      <div class="field fake-field"></div>
+      <div></div>
     </div>
 
-    <div class="row players">
-      <div class="player-card neon-subcard">
-        <h3><span class="badge p1"></span> Giocatore 1</h3>
+    <div class="players grid-2">
+      <div class="player-card">
+        <h3 class="h3">Giocatore 1</h3>
         <label class="field">
-          <span class="label">Lettera (opzionale)</span>
+          <span class="label">Nome</span>
+          <input id="p1Name" type="text" maxlength="20" placeholder="Nome" value="Giocatore 1" />
+        </label>
+        <label class="field">
+          <span class="label">Lettera (marchio opzionale)</span>
           <input id="p1Letter" type="text" maxlength="1" placeholder="A" />
         </label>
         <label class="field">
-          <span class="label">Colore</span>
-          <input id="p1Color" type="color" value="#00e5ff" />
+          <span class="label">Colore pieno</span>
+          <input id="p1Color" type="color" value="#12C2E9" />
         </label>
       </div>
 
-      <div class="player-card neon-subcard">
-        <h3><span class="badge p2"></span> Giocatore 2</h3>
+      <div class="player-card">
+        <h3 class="h3">Giocatore 2</h3>
         <label class="field">
-          <span class="label">Lettera (opzionale)</span>
+          <span class="label">Nome</span>
+          <input id="p2Name" type="text" maxlength="20" placeholder="Nome" value="Giocatore 2" />
+        </label>
+        <label class="field">
+          <span class="label">Lettera (marchio opzionale)</span>
           <input id="p2Letter" type="text" maxlength="1" placeholder="B" />
         </label>
         <label class="field">
-          <span class="label">Colore</span>
-          <input id="p2Color" type="color" value="#ff3df7" />
+          <span class="label">Colore pieno</span>
+          <input id="p2Color" type="color" value="#F72585" />
         </label>
       </div>
     </div>
 
-    <div class="row actions">
-      <button id="startBtn" class="btn primary" type="button">Avvia partita</button>
+    <div class="actions centered">
+      <button id="startBtn" type="button" class="btn primary">Avvia partita</button>
     </div>
-    <p class="hint">Suggerimento: se lasci la lettera vuota, i tuoi quadrati useranno il tuo colore.</p>
+    <p class="hint">Se lasci vuota la lettera, i tuoi quadrati saranno solo “pixel” di colore.</p>
   </section>
 
-  <!-- Area di gioco -->
-  <section id="gameArea" class="panel neon-card game-enter" hidden>
+  <!-- Game -->
+  <section id="gameArea" class="panel container" hidden>
     <div class="topbar">
-      <div id="turnIndicator" class="turn-indicator">
-        Turno: <span id="turnWho" class="who"></span>
+      <div class="turn">
+        Turno: <span id="turnWho" class="pill"></span>
       </div>
       <div class="controls">
-        <button id="undoBtn" class="btn ghost" type="button" title="Annulla mossa">↶ Annulla</button>
-        <button id="scoreBtn" class="btn ghost" type="button">Mostra punteggio</button>
-        <button id="muteBtn" class="btn ghost" type="button" aria-pressed="false" title="Mute SFX">🔊 Audio</button>
-        <button id="newBtn" class="btn" type="button">Nuova partita</button>
+        <button id="undoBtn" type="button" class="btn">↶ Annulla</button>
+        <button id="scoreBtn" type="button" class="btn">Mostra punteggio</button>
+        <button id="newBtn" type="button" class="btn">Nuova partita</button>
       </div>
     </div>
 
-    <div id="boardWrapper" class="board-wrapper">
-      <div id="board" class="board" aria-label="griglia di gioco" role="grid"></div>
-      <div class="board-glow" aria-hidden="true"></div>
+    <div class="board-wrap">
+      <div id="board" class="board" aria-label="griglia" role="grid"></div>
     </div>
   </section>
 
   <!-- Modal punteggio -->
   <dialog id="scoreModal" class="modal">
-    <h3 class="neon">Punteggio</h3>
-    <div id="scoreContent" class="score-content"></div>
-    <div class="modal-actions">
-      <button id="closeScore" class="btn primary" type="button">Chiudi</button>
+    <h3 class="h3">Punteggio</h3>
+    <div id="scoreContent" class="score"></div>
+    <div class="actions right">
+      <button id="closeScore" type="button" class="btn primary">Chiudi</button>
     </div>
   </dialog>
 
-  <footer class="app-footer">
-    <div class="neon-divider small" aria-hidden="true"></div>
-    <small>Solo HTML/CSS/JS • Nessun backend • Pronto per Netlify</small>
+  <footer class="app-footer container">
+    <small>Solo HTML/CSS/JS • Pronto per Netlify</small>
   </footer>
 
-  <!-- JS con cache buster -->
-  <script src="./script.js?v=neon3" defer></script>
+  <script src="./script.js?v=pixel1" defer></script>
 </body>
 </html>
