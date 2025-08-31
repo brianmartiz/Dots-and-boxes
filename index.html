@@ -4,9 +4,12 @@
   <meta charset="UTF-8" />
   <title>Dots & Boxes — Neon 70s</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Font retrò -->
+
+  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Archivo:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+
+  <!-- CSS (cache buster) -->
+  <link rel="stylesheet" href="./style.css?v=neon2">
 </head>
 <body class="theme-dark">
   <header class="app-header">
@@ -24,7 +27,6 @@
         <input id="gridSize" type="number" min="1" max="10" value="4" />
         <small class="help">Da 1×1 fino a 10×10</small>
       </label>
-
       <div class="field fake-field"></div>
     </div>
 
@@ -55,7 +57,7 @@
     </div>
 
     <div class="row actions">
-      <button id="startBtn" class="btn primary">Avvia partita</button>
+      <button id="startBtn" class="btn primary" type="button">Avvia partita</button>
     </div>
     <p class="hint">Suggerimento: se lasci la lettera vuota, i tuoi quadrati useranno il tuo colore.</p>
   </section>
@@ -67,8 +69,8 @@
         Turno: <span id="turnWho" class="who"></span>
       </div>
       <div class="controls">
-        <button id="scoreBtn" class="btn ghost">Mostra punteggio</button>
-        <button id="newBtn" class="btn">Nuova partita</button>
+        <button id="scoreBtn" class="btn ghost" type="button">Mostra punteggio</button>
+        <button id="newBtn" class="btn" type="button">Nuova partita</button>
       </div>
     </div>
 
@@ -83,7 +85,7 @@
     <h3 class="neon">Punteggio</h3>
     <div id="scoreContent" class="score-content"></div>
     <div class="modal-actions">
-      <button id="closeScore" class="btn primary">Chiudi</button>
+      <button id="closeScore" class="btn primary" type="button">Chiudi</button>
     </div>
   </dialog>
 
@@ -92,6 +94,7 @@
     <small>Solo HTML/CSS/JS • Nessun backend • Pronto per Netlify</small>
   </footer>
 
-  <script src="script.js"></script>
+  <!-- JS (cache buster + defer) -->
+  <script src="./script.js?v=neon2" defer></script>
 </body>
 </html>
