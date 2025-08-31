@@ -2,44 +2,58 @@
 
 /** Stato di gioco */
 const state = {
-  N: 0, // quadrati per lato
-  current: 0, // 0: P1, 1: P2
+  N: 0,                // quadrati per lato
+  current: 0,          // 0: P1, 1: P2
   players: [
     { letter: '', color: '#00e5ff', score: 0 },
     { letter: '', color: '#ff3df7', score: 0 }
   ],
 };
 
-const els = {
-  config: document.getElementById('config'),
-  gridSize: document.getElementById('gridSize'),
-  p1Letter: document.getElementById('p1Letter'),
-  p1Color: document.getElementById('p1Color'),
-  p2Letter: document.getElementById('p2Letter'),
-  p2Color: document.getElementById('p2Color'),
-  startBtn: document.getElementById('startBtn'),
-
-  gameArea: document.getElementById('gameArea'),
-  board: document.getElementById('board'),
-  turnIndicator: document.getElementById('turnIndicator'),
-  turnWho: document.getElementById('turnWho'),
-  scoreBtn: document.getElementById('scoreBtn'),
-  newBtn: document.getElementById('newBtn'),
-
-  scoreModal: document.getElementById('scoreModal'),
-  scoreContent: document.getElementById('scoreContent'),
-  closeScore: document.getElementById('closeScore'),
-};
+const els = {}; // popolato in init()
 
 /** Utils */
 const clamp = (min, v, max) => Math.max(min, Math.min(v, max));
 const uc1 = (s) => (s || '').trim().slice(0,1).toUpperCase();
 
-/** Setup eventi UI */
-els.startBtn.addEventListener('click', startGame);
-els.scoreBtn.addEventListener('click', showScore);
-els.closeScore.addEventListener('click', () => els.scoreModal.close());
-els.newBtn.addEventListener('click', resetToConfig);
+document.addEventListener('DOMContentLoaded', init);
+
+function init(){
+  // Mappo gli elementi SOLO ora che il DOM è pronto
+  Object.assign(els, {
+    config: document.getElementById('config'),
+    gridSize: document.getElementById('gridSize'),
+    p1Letter: document.getElementById('p1Letter'),
+    p1Color: document.getElementById('p1Color'),
+    p2Letter: document.getElementById('p2Letter'),
+    p2Color: document.getElementById('p2Color'),
+    startBtn: document.getElementById('startBtn'),
+
+    gameArea: document.getElementById('gameArea'),
+    board: document.getElementById('board'),
+    turnIndicator: document.getElementById('turnIndicator'),
+    turnWho: document.getElementById('turnWho'),
+    scoreBtn: document.getElementById('scoreBtn'),
+    newBtn: document.getElementById('newBtn'),
+
+    scoreModal: document.getElementById('scoreModal'),
+    scoreContent: document.getElementById('scoreContent'),
+    closeScore: document.getElementById('closeScore'),
+  });
+
+  // Piccolo sanity check in console per debugging
+  ['startBtn','board','gridSize'].forEach(id=>{
+    if(!els[id]) console.warn(`[dots&boxes] elemento mancante: ${id}`);
+  });
+
+  // Eventi UI (con optional chaining in caso di customizzazioni future)
+  els.startBtn?.addEventListener('click', startGame);
+  els.scoreBtn?.addEventListener('click', () => showScore(false));
+  els.closeScore?.addEventListener('click', () => {
+    try { els.scoreModal.close(); } catch { els.scoreModal.removeAttribute('open'); }
+  });
+  els.newBtn?.addEventListener('click', resetToConfig);
+}
 
 /** Avvia nuova partita */
 function startGame(){
@@ -140,8 +154,7 @@ function onLineClick(ev){
   const totalBoxes = state.N * state.N;
   const claimed = document.querySelectorAll('.box.claimed').length;
   if (claimed === totalBoxes){
-    // Mostra punteggio finale automaticamente
-    setTimeout(() => showScore(true), 120);
+    setTimeout(() => showScore(true), 120); // mostra punteggio finale
   }
 }
 
@@ -171,7 +184,7 @@ function checkAndClaimBoxes(type, r, c){
   return closed;
 }
 
-/** Ritorna true se tutti e 4 i lati del box (row,col) sono tracciati */
+/** True se tutti e 4 i lati del box (row,col) sono tracciati */
 function isBoxClosed(row, col){
   const top    = document.querySelector(`.h-line[data-row="${row}"][data-col="${col}"]`);
   const bottom = document.querySelector(`.h-line[data-row="${row+1}"][data-col="${col}"]`);
@@ -197,7 +210,6 @@ function claimBox(row, col){
     box.textContent = me.letter;
     box.style.color = me.color;
   } else {
-    // Riempimento a gradiente neon del colore del giocatore
     box.style.background = `linear-gradient(135deg, ${me.color}33 0%, ${me.color}22 100%)`;
     box.style.boxShadow = `inset 0 0 26px ${me.color}22, 0 0 20px ${me.color}33`;
   }
@@ -210,16 +222,22 @@ function updateTurnUI(){
   const me = state.players[state.current];
   const label = me.letter ? `Giocatore ${state.current+1} (${me.letter})`
                           : `Giocatore ${state.current+1}`;
-  const el = els.turnWho;
-  el.textContent = label;
-  el.style.color = me.color;
-  el.style.textShadow = `0 0 8px ${me.color}66, 0 0 16px ${me.color}33`;
+  const el = document.getElementById('turnWho');
+  if (el){
+    el.textContent = label;
+    el.style.color = me.color;
+    el.style.textShadow = `0 0 8px ${me.color}66, 0 0 16px ${me.color}33`;
+  }
 }
 
 /** Mostra il punteggio (se final=true aggiunge nota di fine) */
 function showScore(final=false){
   const p1 = state.players[0], p2 = state.players[1];
-  els.scoreContent.innerHTML = '';
+  const container = document.getElementById('scoreContent');
+  const modal = document.getElementById('scoreModal');
+  if (!container || !modal) return;
+
+  container.innerHTML = '';
 
   const line1 = document.createElement('div');
   line1.className = 'score-line';
@@ -237,8 +255,8 @@ function showScore(final=false){
     <strong>${p2.score}</strong>
   `;
 
-  els.scoreContent.appendChild(line1);
-  els.scoreContent.appendChild(line2);
+  container.appendChild(line1);
+  container.appendChild(line2);
 
   if (final){
     const note = document.createElement('div');
@@ -246,22 +264,28 @@ function showScore(final=false){
     note.style.color = '#ffd166';
     const verdict = (p1.score===p2.score) ? 'Pareggio!' : (p1.score>p2.score ? 'Vince il Giocatore 1!' : 'Vince il Giocatore 2!');
     note.textContent = `Partita conclusa • ${verdict}`;
-    els.scoreContent.appendChild(note);
+    container.appendChild(note);
   }
 
-  try { els.scoreModal.showModal(); }
-  catch { els.scoreModal.setAttribute('open',''); } // fallback iOS vecchi
+  try { modal.showModal(); }
+  catch { modal.setAttribute('open',''); } // fallback iOS vecchi
 }
 
 /** Torna alla configurazione */
 function resetToConfig(){
-  els.board.innerHTML = '';
+  const board = document.getElementById('board');
+  if (board) board.innerHTML = '';
   state.N = 0;
   state.current = 0;
   state.players[0].score = state.players[1].score = 0;
 
-  els.gameArea.hidden = true;
-  els.config.hidden = false;
+  const gameArea = document.getElementById('gameArea');
+  const config = document.getElementById('config');
+  if (gameArea) gameArea.hidden = true;
+  if (config) config.hidden = false;
 
-  if (els.scoreModal.open) els.scoreModal.close();
+  const modal = document.getElementById('scoreModal');
+  if (modal?.open) { try { modal.close(); } catch { modal.removeAttribute('open'); } }
 }
+
+/* Fine */
