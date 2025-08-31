@@ -231,10 +231,15 @@ function undoMove(){
 /** ===== UI ===== */
 function updateTurnUI(){
   const me = state.players[state.current];
+  // testo del turno: usa il NOME scelto (lettera solo se presente)
   els.turnWho.textContent = `${me.name}${me.letter ? ` (${me.letter})` : ''}`;
-  els.turnWho.style.borderColor = '#223044';
-  els.turnWho.style.color = '#e9eef7';
+
+  // imposta una variabile CSS per l'accento neon della pill
+  document.documentElement.style.setProperty('--active', me.color);
+
+  // restiamo su UI flat: niente gradient nel testo
   els.turnWho.style.background = '#0b0f17';
+  els.turnWho.style.color = '#e9eef7';
 }
 
 function showScore(final=false){
