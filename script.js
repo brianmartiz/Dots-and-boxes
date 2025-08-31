@@ -1,197 +1,266 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Elementi dell'interfaccia utente (UI)
-    const setupDiv = document.getElementById('setup');
-    const gameContainer = document.getElementById('game-container');
-    const gridSizeInput = document.getElementById('grid-size');
-    const p1MarkerInput = document.getElementById('p1-marker');
-    const p2MarkerInput = document.getElementById('p2-marker');
-    const startGameBtn = document.getElementById('start-game-btn');
-    const board = document.getElementById('board');
-    const turnIndicator = document.getElementById('turn-indicator');
-    const scoreBtn = document.getElementById('score-btn');
-    const newGameBtn = document.getElementById('new-game-btn');
-    const scoreModal = document.getElementById('score-modal');
-    const scoreDisplay = document.getElementById('score-display');
-    const closeBtn = document.querySelector('.close-btn');
+'use strict';
 
-    // Variabili di stato del gioco
-    let gridSize;
-    let players;
-    let currentPlayer;
-    let scores;
-    let horizontalLines;
-    let verticalLines;
-    let boxes;
-    let gameEnded;
+/** Stato di gioco */
+const state = {
+  N: 0, // quadrati per lato
+  current: 0, // 0: P1, 1: P2
+  players: [
+    { letter: '', color: '#00e5ff', score: 0 },
+    { letter: '', color: '#ff3df7', score: 0 }
+  ],
+};
 
-    // Colori NEON predefiniti
-    const NEON_COLORS = {
-        p1: '#00f6ff', // Ciano
-        p2: '#ff00e5'  // Magenta
-    };
+const els = {
+  config: document.getElementById('config'),
+  gridSize: document.getElementById('gridSize'),
+  p1Letter: document.getElementById('p1Letter'),
+  p1Color: document.getElementById('p1Color'),
+  p2Letter: document.getElementById('p2Letter'),
+  p2Color: document.getElementById('p2Color'),
+  startBtn: document.getElementById('startBtn'),
 
-    // --- GESTIONE DEGLI EVENTI ---
-    startGameBtn.addEventListener('click', initializeGame);
-    newGameBtn.addEventListener('click', () => {
-        gameContainer.classList.add('hidden');
-        setupDiv.classList.remove('hidden');
-    });
-    scoreBtn.addEventListener('click', () => {
-        scoreDisplay.innerHTML = `Giocatore 1: <span style="color:${NEON_COLORS.p1}">${scores.p1}</span> - Giocatore 2: <span style="color:${NEON_COLORS.p2}">${scores.p2}</span>`;
-        scoreModal.classList.remove('hidden');
-    });
-    closeBtn.addEventListener('click', () => scoreModal.classList.add('hidden'));
-    window.addEventListener('click', (event) => {
-        if (event.target == scoreModal) scoreModal.classList.add('hidden');
-    });
+  gameArea: document.getElementById('gameArea'),
+  board: document.getElementById('board'),
+  turnIndicator: document.getElementById('turnIndicator'),
+  turnWho: document.getElementById('turnWho'),
+  scoreBtn: document.getElementById('scoreBtn'),
+  newBtn: document.getElementById('newBtn'),
 
-    // --- FUNZIONI PRINCIPALI DEL GIOCO ---
+  scoreModal: document.getElementById('scoreModal'),
+  scoreContent: document.getElementById('scoreContent'),
+  closeScore: document.getElementById('closeScore'),
+};
 
-    function initializeGame() {
-        gridSize = parseInt(gridSizeInput.value);
-        if (gridSize < 2 || gridSize > 10) {
-            alert("La grandezza della griglia deve essere tra 2 e 10.");
-            return;
-        }
+/** Utils */
+const clamp = (min, v, max) => Math.max(min, Math.min(v, max));
+const uc1 = (s) => (s || '').trim().slice(0,1).toUpperCase();
 
-        players = {
-            p1: { marker: p1MarkerInput.value || 'P1', color: NEON_COLORS.p1 },
-            p2: { marker: p2MarkerInput.value || 'P2', color: NEON_COLORS.p2 }
-        };
+/** Setup eventi UI */
+els.startBtn.addEventListener('click', startGame);
+els.scoreBtn.addEventListener('click', showScore);
+els.closeScore.addEventListener('click', () => els.scoreModal.close());
+els.newBtn.addEventListener('click', resetToConfig);
 
-        currentPlayer = 1;
-        scores = { p1: 0, p2: 0 };
-        gameEnded = false;
-        
-        horizontalLines = Array(gridSize + 1).fill(null).map(() => Array(gridSize).fill(false));
-        verticalLines = Array(gridSize).fill(null).map(() => Array(gridSize + 1).fill(false));
-        boxes = Array(gridSize).fill(null).map(() => Array(gridSize).fill(0));
+/** Avvia nuova partita */
+function startGame(){
+  const N = clamp(1, parseInt(els.gridSize.value, 10) || 4, 10);
+  state.N = N;
 
-        setupDiv.classList.add('hidden');
-        gameContainer.classList.remove('hidden');
-        
-        updateTurnIndicator();
-        createBoard();
+  state.players[0].letter = uc1(els.p1Letter.value);
+  state.players[0].color  = els.p1Color.value || '#00e5ff';
+  state.players[1].letter = uc1(els.p2Letter.value);
+  state.players[1].color  = els.p2Color.value || '#ff3df7';
+  state.players[0].score = 0;
+  state.players[1].score = 0;
+  state.current = 0;
+
+  buildBoard(N);
+
+  els.config.hidden = true;
+  els.gameArea.hidden = false;
+  updateTurnUI();
+}
+
+/** Ricostruisce la board come griglia (2N+1)x(2N+1) */
+function buildBoard(N){
+  const R = 2*N + 1;
+  els.board.innerHTML = ''; // reset
+  els.board.style.gridTemplateColumns = `repeat(${R}, 1fr)`;
+  els.board.style.gridTemplateRows = `repeat(${R}, 1fr)`;
+
+  for (let r = 0; r < R; r++){
+    for (let c = 0; c < R; c++){
+      const cell = document.createElement('div');
+
+      if (r % 2 === 0 && c % 2 === 0){
+        // Punto
+        cell.className = 'dot';
+        cell.setAttribute('role','presentation');
+
+      } else if (r % 2 === 0 && c % 2 === 1){
+        // Linea orizzontale: row: 0..N, col: 0..N-1
+        const row = r/2;
+        const col = (c-1)/2;
+        cell.className = 'h-line';
+        cell.dataset.row = String(row);
+        cell.dataset.col = String(col);
+        cell.setAttribute('aria-label', `Linea orizzontale r${row} c${col}`);
+        cell.addEventListener('click', onLineClick, { passive: true });
+
+      } else if (r % 2 === 1 && c % 2 === 0){
+        // Linea verticale: row: 0..N-1, col: 0..N
+        const row = (r-1)/2;
+        const col = c/2;
+        cell.className = 'v-line';
+        cell.dataset.row = String(row);
+        cell.dataset.col = String(col);
+        cell.setAttribute('aria-label', `Linea verticale r${row} c${col}`);
+        cell.addEventListener('click', onLineClick, { passive: true });
+
+      } else {
+        // Box: 0..N-1, 0..N-1
+        const row = (r-1)/2;
+        const col = (c-1)/2;
+        cell.className = 'box';
+        cell.dataset.row = String(row);
+        cell.dataset.col = String(col);
+        cell.setAttribute('role','gridcell');
+      }
+
+      els.board.appendChild(cell);
     }
+  }
+}
 
-    function createBoard() {
-        board.innerHTML = '';
-        const boardSize = gridSize * 2 + 1;
-        board.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
-        board.style.gridTemplateRows = `repeat(${boardSize}, 30px)`;
+/** Gestione click su una linea */
+function onLineClick(ev){
+  const line = ev.currentTarget;
+  if (line.classList.contains('drawn')) return; // già tracciata
 
-        for (let row = 0; row < boardSize; row++) {
-            for (let col = 0; col < boardSize; col++) {
-                const cell = document.createElement('div');
-                if (row % 2 === 0 && col % 2 === 0) {
-                    cell.classList.add('dot');
-                } else if (row % 2 === 0 && col % 2 !== 0) {
-                    cell.classList.add('line', 'horizontal');
-                    cell.dataset.row = row / 2;
-                    cell.dataset.col = (col - 1) / 2;
-                    cell.addEventListener('click', handleLineClick);
-                } else if (row % 2 !== 0 && col % 2 === 0) {
-                    cell.classList.add('line', 'vertical');
-                    cell.dataset.row = (row - 1) / 2;
-                    cell.dataset.col = col / 2;
-                    cell.addEventListener('click', handleLineClick);
-                } else {
-                    cell.classList.add('box');
-                    cell.dataset.row = (row - 1) / 2;
-                    cell.dataset.col = (col - 1) / 2;
-                }
-                board.appendChild(cell);
-            }
-        }
+  // Colora la linea con il colore del giocatore corrente
+  const drawColor = state.players[state.current].color;
+  line.style.setProperty('--draw', drawColor);
+  line.classList.add('drawn');
+
+  // Dopo aver tracciato, verifica se chiude uno o più box
+  const type = line.classList.contains('h-line') ? 'h' : 'v';
+  const r = parseInt(line.dataset.row, 10);
+  const c = parseInt(line.dataset.col, 10);
+
+  const closedAny = checkAndClaimBoxes(type, r, c);
+
+  // Se non ha chiuso nulla → cambio turno
+  if (!closedAny){
+    state.current = 1 - state.current;
+  }
+
+  updateTurnUI();
+
+  // Fine partita?
+  const totalBoxes = state.N * state.N;
+  const claimed = document.querySelectorAll('.box.claimed').length;
+  if (claimed === totalBoxes){
+    // Mostra punteggio finale automaticamente
+    setTimeout(() => showScore(true), 120);
+  }
+}
+
+/** Controlla i box adiacenti alla linea e li assegna se chiusi */
+function checkAndClaimBoxes(type, r, c){
+  const N = state.N;
+  let closed = false;
+  const checks = [];
+
+  if (type === 'h'){
+    // sopra (r-1, c) se r>0; sotto (r, c) se r<N
+    if (r > 0) checks.push({row: r-1, col: c});
+    if (r < N) checks.push({row: r,   col: c});
+  } else {
+    // sinistra (r, c-1) se c>0; destra (r, c) se c<N
+    if (c > 0) checks.push({row: r, col: c-1});
+    if (c < N) checks.push({row: r, col: c});
+  }
+
+  for (const pos of checks){
+    if (isBoxClosed(pos.row, pos.col)){
+      claimBox(pos.row, pos.col);
+      closed = true;
     }
+  }
 
-    function handleLineClick(event) {
-        if (gameEnded) return;
+  return closed;
+}
 
-        const line = event.target;
-        if (line.classList.contains('taken')) return;
+/** Ritorna true se tutti e 4 i lati del box (row,col) sono tracciati */
+function isBoxClosed(row, col){
+  const top    = document.querySelector(`.h-line[data-row="${row}"][data-col="${col}"]`);
+  const bottom = document.querySelector(`.h-line[data-row="${row+1}"][data-col="${col}"]`);
+  const left   = document.querySelector(`.v-line[data-row="${row}"][data-col="${col}"]`);
+  const right  = document.querySelector(`.v-line[data-row="${row}"][data-col="${col+1}"]`);
 
-        const row = parseInt(line.dataset.row);
-        const col = parseInt(line.dataset.col);
-        let boxCompleted = false;
-        const playerColor = (currentPlayer === 1) ? players.p1.color : players.p2.color;
+  return !!(top && bottom && left && right &&
+            top.classList.contains('drawn') &&
+            bottom.classList.contains('drawn') &&
+            left.classList.contains('drawn') &&
+            right.classList.contains('drawn'));
+}
 
-        line.classList.add('taken');
-        line.style.backgroundColor = playerColor;
-        line.style.boxShadow = `0 0 10px ${playerColor}`;
+/** Assegna il box al giocatore corrente (lettera o colore), incrementa punteggio */
+function claimBox(row, col){
+  const box = document.querySelector(`.box[data-row="${row}"][data-col="${col}"]`);
+  if (!box || box.classList.contains('claimed')) return;
 
-        if (line.classList.contains('horizontal')) {
-            horizontalLines[row][col] = true;
-            if (row > 0 && checkBox(row - 1, col)) boxCompleted = true;
-            if (row < gridSize && checkBox(row, col)) boxCompleted = true;
-        } else {
-            verticalLines[row][col] = true;
-            if (col > 0 && checkBox(row, col - 1)) boxCompleted = true;
-            if (col < gridSize && checkBox(row, col)) boxCompleted = true;
-        }
+  box.classList.add('claimed');
 
-        if (!boxCompleted) {
-            switchPlayer();
-        }
-        
-        if (!gameEnded) {
-            updateTurnIndicator();
-        }
-        
-        checkGameOver();
-    }
+  const me = state.players[state.current];
+  if (me.letter){
+    box.textContent = me.letter;
+    box.style.color = me.color;
+  } else {
+    // Riempimento a gradiente neon del colore del giocatore
+    box.style.background = `linear-gradient(135deg, ${me.color}33 0%, ${me.color}22 100%)`;
+    box.style.boxShadow = `inset 0 0 26px ${me.color}22, 0 0 20px ${me.color}33`;
+  }
 
-    function checkBox(row, col) {
-        if (boxes[row][col] !== 0) return false;
+  me.score++;
+}
 
-        if (horizontalLines[row][col] && horizontalLines[row + 1][col] &&
-            verticalLines[row][col] && verticalLines[row][col + 1]) {
-            
-            boxes[row][col] = currentPlayer;
-            if (currentPlayer === 1) scores.p1++; else scores.p2++;
-            
-            const boxElement = document.querySelector(`.box[data-row='${row}'][data-col='${col}']`);
-            const player = (currentPlayer === 1) ? players.p1 : players.p2;
-            
-            boxElement.style.backgroundColor = `${player.color}33`; // Colore con trasparenza
-            boxElement.style.color = player.color;
-            boxElement.style.textShadow = `0 0 10px ${player.color}, 0 0 15px ${player.color}`;
-            boxElement.textContent = player.marker;
-            
-            return true;
-        }
-        return false;
-    }
+/** Aggiorna indicatore di turno (pill con glow del colore giocatore) */
+function updateTurnUI(){
+  const me = state.players[state.current];
+  const label = me.letter ? `Giocatore ${state.current+1} (${me.letter})`
+                          : `Giocatore ${state.current+1}`;
+  els.turnWho.textContent = label;
+  els.turnWho.style.color = me.color;
+  els.turnWho.style.textShadow = `0 0 8px ${me.color}66, 0 0 16px ${me.color}33`;
+}
 
-    function switchPlayer() {
-        currentPlayer = (currentPlayer === 1) ? 2 : 1;
-    }
+/** Mostra il punteggio (se final=true aggiunge nota di fine) */
+function showScore(final=false){
+  const p1 = state.players[0], p2 = state.players[1];
+  els.scoreContent.innerHTML = '';
 
-    function updateTurnIndicator() {
-        const playerColor = (currentPlayer === 1) ? players.p1.color : players.p2.color;
-        turnIndicator.textContent = `Turno del Giocatore ${currentPlayer}`;
-        turnIndicator.style.color = playerColor;
-        turnIndicator.style.textShadow = `0 0 8px ${playerColor}`;
-    }
+  const line1 = document.createElement('div');
+  line1.className = 'score-line';
+  line1.innerHTML = `
+    <span><span class="score-dot" style="background:${p1.color}"></span>
+      Giocatore 1 ${p1.letter ? `(${p1.letter})` : ''}</span>
+    <strong>${p1.score}</strong>
+  `;
 
-    function checkGameOver() {
-        if (scores.p1 + scores.p2 === gridSize * gridSize) {
-            gameEnded = true;
-            let winnerMessage;
-            if (scores.p1 > scores.p2) {
-                winnerMessage = `Vince il Giocatore 1!`;
-                turnIndicator.style.color = players.p1.color;
-                turnIndicator.style.textShadow = `0 0 8px ${players.p1.color}`;
-            } else if (scores.p2 > scores.p1) {
-                winnerMessage = `Vince il Giocatore 2!`;
-                turnIndicator.style.color = players.p2.color;
-                turnIndicator.style.textShadow = `0 0 8px ${players.p2.color}`;
-            } else {
-                winnerMessage = 'Pareggio!';
-                turnIndicator.style.color = '#e0e0e0';
-                turnIndicator.style.textShadow = `0 0 8px #e0e0e0`;
-            }
-            turnIndicator.textContent = `Partita finita! ${winnerMessage}`;
-        }
-    }
-});
+  const line2 = document.createElement('div');
+  line2.className = 'score-line';
+  line2.innerHTML = `
+    <span><span class="score-dot" style="background:${p2.color}"></span>
+      Giocatore 2 ${p2.letter ? `(${p2.letter})` : ''}</span>
+    <strong>${p2.score}</strong>
+  `;
+
+  els.scoreContent.appendChild(line1);
+  els.scoreContent.appendChild(line2);
+
+  if (final){
+    const note = document.createElement('div');
+    note.style.marginTop = '8px';
+    note.style.color = '#ffd166';
+    const verdict = (p1.score===p2.score) ? 'Pareggio!' : (p1.score>p2.score ? 'Vince il Giocatore 1!' : 'Vince il Giocatore 2!');
+    note.textContent = `Partita conclusa • ${verdict}`;
+    els.scoreContent.appendChild(note);
+  }
+
+  try { els.scoreModal.showModal(); }
+  catch { els.scoreModal.setAttribute('open',''); } // fallback
+}
+
+/** Torna alla configurazione (senza ricaricare la pagina) */
+function resetToConfig(){
+  els.board.innerHTML = '';
+  state.N = 0;
+  state.current = 0;
+  state.players[0].score = state.players[1].score = 0;
+
+  els.gameArea.hidden = true;
+  els.config.hidden = false;
+
+  if (els.scoreModal.open) els.scoreModal.close();
+}
