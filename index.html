@@ -1,59 +1,84 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Dots & Boxes</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Dots & Boxes — Neon 70s</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Facoltativo: font retrò -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <header class="app-header">
+    <h1 class="neon-title">Dots & Boxes</h1>
+    <p class="subtitle">Tema neon anni ’70 • due giocatori sullo stesso dispositivo</p>
+  </header>
 
-    <div id="setup">
-        <h1 class="neon-title">Dots & Boxes</h1>
-        <div class="config-item">
-            <label for="grid-size">Grandezza Griglia (2-10):</label>
-            <input type="number" id="grid-size" min="2" max="10" value="5">
-        </div>
-
-        <div class="player-config">
-            <h2>Giocatore 1 (Ciano)</h2>
-            <label for="p1-marker">Lettera:</label>
-            <input type="text" id="p1-marker" maxlength="1" value="A">
-        </div>
-
-        <div class="player-config">
-            <h2>Giocatore 2 (Magenta)</h2>
-            <label for="p2-marker">Lettera:</label>
-            <input type="text" id="p2-marker" maxlength="1" value="B">
-        </div>
-
-        <button id="start-game-btn">Inizia a Giocare</button>
+  <!-- Pannello configurazione -->
+  <section id="config" class="panel">
+    <div class="row">
+      <label for="gridSize">Dimensione (quadrati per lato):</label>
+      <input id="gridSize" type="number" min="1" max="10" value="4" />
     </div>
 
-    <div id="game-container" class="hidden">
-        <div id="game-info">
-            <p id="turn-indicator">Turno del Giocatore 1</p>
-        </div>
-        <div id="board"></div>
-        <div id="game-controls">
-            <button id="score-btn">Punteggio</button>
-            <button id="new-game-btn">Nuova Partita</button>
-        </div>
+    <div class="row players">
+      <div class="player-card">
+        <h3><span class="badge p1"></span> Giocatore 1</h3>
+        <label>Lettera (opzionale)
+          <input id="p1Letter" type="text" maxlength="1" placeholder="A" />
+        </label>
+        <label>Colore
+          <input id="p1Color" type="color" value="#00e5ff" />
+        </label>
+      </div>
+
+      <div class="player-card">
+        <h3><span class="badge p2"></span> Giocatore 2</h3>
+        <label>Lettera (opzionale)
+          <input id="p2Letter" type="text" maxlength="1" placeholder="B" />
+        </label>
+        <label>Colore
+          <input id="p2Color" type="color" value="#ff3df7" />
+        </label>
+      </div>
     </div>
 
-    <div id="score-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h2>Punteggio</h2>
-            <p id="score-display"></p>
-        </div>
+    <div class="row actions">
+      <button id="startBtn" class="btn primary">Avvia partita</button>
+    </div>
+    <p class="hint">Suggerimento: se lasci la lettera vuota, i tuoi quadrati useranno il tuo colore.</p>
+  </section>
+
+  <!-- Area di gioco -->
+  <section id="gameArea" class="panel" hidden>
+    <div class="topbar">
+      <div id="turnIndicator" class="turn-indicator">
+        Turno: <span id="turnWho" class="who"></span>
+      </div>
+      <div class="controls">
+        <button id="scoreBtn" class="btn ghost">Mostra punteggio</button>
+        <button id="newBtn" class="btn">Nuova partita</button>
+      </div>
     </div>
 
-    <script src="script.js"></script>
+    <div id="boardWrapper">
+      <div id="board" class="board" aria-label="griglia di gioco" role="grid"></div>
+    </div>
+  </section>
+
+  <!-- Modal punteggio -->
+  <dialog id="scoreModal" class="modal">
+    <h3 class="neon">Punteggio</h3>
+    <div id="scoreContent" class="score-content"></div>
+    <div class="modal-actions">
+      <button id="closeScore" class="btn primary">Chiudi</button>
+    </div>
+  </dialog>
+
+  <footer class="app-footer">
+    <small>Solo HTML/CSS/JS • Nessun backend • Pronto per Netlify</small>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
